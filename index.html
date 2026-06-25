@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>برنامه‌ریزی شخصی طراحی شده علی رحمانی </title>
-  
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.min.js"></script>
@@ -507,9 +507,8 @@
   }
   function resetForm() { editId = null; $('#taskTitle, #taskTags').val(''); $('.day-chip').removeClass('active'); $('#form-card').removeClass('edit-mode'); $('#saveBtn').text('افزودن به لیست'); $('#cancelBtn').hide(); toggleDays(); }
 </script>
-  <script>
-    // تست نهایی در انتهای فایل
-    window.addEventListener('DOMContentLoaded', () => {
+ <script>
+    window.addEventListener('load', () => {
         setTimeout(() => {
             const lastVisit = localStorage.getItem('lastWelcomeDate');
             const today = new Date().toLocaleDateString('fa-IR');
@@ -518,20 +517,23 @@
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         title: 'سلام، خوش اومدی! 👋',
-                        text: 'امیدوارم امروز یکی از بهترین روزهات باشه. 🚀',
+                        text: 'امیدوارم امروز یکی از بهترین روزهات باشه و به تمام برنامه‌هات برسی. 🚀',
                         icon: 'success',
                         confirmButtonText: 'بزن بریم!',
-                        confirmButtonColor: '#4f46e5'
+                        confirmButtonColor: '#4f46e5',
+                        background: '#ffffff',
+                        showClass: {
+                            popup: 'animate__animated animate__fadeInDown'
+                        }
                     }).then(() => {
                         localStorage.setItem('lastWelcomeDate', today);
                     });
-                } else {
-                    console.error("SweetAlert library is not loaded yet!");
                 }
             }
-        }, 3000); // ۳ ثانیه صبر برای اطمینان کامل
+        }, 2000); 
     });
 </script>
+
 
 </body>
 </html>
