@@ -230,24 +230,30 @@
   let postponedState = JSON.parse(localStorage.getItem('tasks_postponed_v24')) || {};
   let perfectDays = JSON.parse(localStorage.getItem('perfect_days_list')) || [];
   let dailyData = JSON.parse(localStorage.getItem('daily_data_v24')) || {};
-      // نمایش پیام خوش‌آمدگویی فقط یک بار در روز
-    window.addEventListener('load', () => {
+      // نسخه تست شده و مطمئن
+    setTimeout(() => {
         const lastVisit = localStorage.getItem('lastWelcomeDate');
         const today = new Date().toLocaleDateString('fa-IR');
 
         if (lastVisit !== today) {
-            Swal.fire({
-                title: 'سلام، خوش اومدی! 👋',
-                text: 'امیدوارم امروز یکی از بهترین روزهات باشه و به تمام برنامه‌هات برسی. 🚀',
-                icon: 'success',
-                confirmButtonText: 'ممنون، شروع کنیم!',
-                confirmButtonColor: '#4f46e5',
-                timer: 5000,
-                timerProgressBar: true
-            });
-            localStorage.setItem('lastWelcomeDate', today);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'سلام، خوش اومدی! 👋',
+                    text: 'امیدوارم امروز یکی از بهترین روزهات باشه و به تمام برنامه‌هات برسی. 🚀',
+                    icon: 'success',
+                    confirmButtonText: 'ممنون، شروع کنیم!',
+                    confirmButtonColor: '#4f46e5',
+                    timer: 5000,
+                    timerProgressBar: true
+                });
+                localStorage.setItem('lastWelcomeDate', today);
+            } else {
+                // اگر کتابخانه هنوز لود نشده بود، از پیام ساده استفاده کن
+                alert("سلام! خوش اومدی. 🚀");
+                localStorage.setItem('lastWelcomeDate', today);
+            }
         }
-    });
+    }, 1000); // یک ثانیه صبر می‌کند تا همه چیز لود شود
 
   let editId = null;
   let currentFilter = 'all';
