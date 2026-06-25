@@ -230,7 +230,25 @@
   let postponedState = JSON.parse(localStorage.getItem('tasks_postponed_v24')) || {};
   let perfectDays = JSON.parse(localStorage.getItem('perfect_days_list')) || [];
   let dailyData = JSON.parse(localStorage.getItem('daily_data_v24')) || {};
-  
+      // نمایش پیام خوش‌آمدگویی فقط یک بار در روز
+    window.addEventListener('load', () => {
+        const lastVisit = localStorage.getItem('lastWelcomeDate');
+        const today = new Date().toLocaleDateString('fa-IR');
+
+        if (lastVisit !== today) {
+            Swal.fire({
+                title: 'سلام، خوش اومدی! 👋',
+                text: 'امیدوارم امروز یکی از بهترین روزهات باشه و به تمام برنامه‌هات برسی. 🚀',
+                icon: 'success',
+                confirmButtonText: 'ممنون، شروع کنیم!',
+                confirmButtonColor: '#4f46e5',
+                timer: 5000,
+                timerProgressBar: true
+            });
+            localStorage.setItem('lastWelcomeDate', today);
+        }
+    });
+
   let editId = null;
   let currentFilter = 'all';
   let analysisOffset = 0; 
