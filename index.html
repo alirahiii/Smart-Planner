@@ -230,30 +230,33 @@
   let postponedState = JSON.parse(localStorage.getItem('tasks_postponed_v24')) || {};
   let perfectDays = JSON.parse(localStorage.getItem('perfect_days_list')) || [];
   let dailyData = JSON.parse(localStorage.getItem('daily_data_v24')) || {};
-      // نسخه تست شده و مطمئن
-    setTimeout(() => {
+      // نمایش پیام خوش‌آمدگویی شیک و فارسی
+    function showWelcomeMessage() {
         const lastVisit = localStorage.getItem('lastWelcomeDate');
         const today = new Date().toLocaleDateString('fa-IR');
 
         if (lastVisit !== today) {
+            // چک کردن اینکه آیا کتابخانه آماده است یا نه
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'سلام، خوش اومدی! 👋',
-                    text: 'امیدوارم امروز یکی از بهترین روزهات باشه و به تمام برنامه‌هات برسی. 🚀',
+                    title: '<span style="font-family:Vazir, sans-serif;">سلام، خوش اومدی! 👋</span>',
+                    html: '<p style="font-family:Vazir, sans-serif;">امیدوارم امروز یکی از بهترین روزهات باشه و به تمام برنامه‌هات برسی. 🚀</p>',
                     icon: 'success',
                     confirmButtonText: 'ممنون، شروع کنیم!',
                     confirmButtonColor: '#4f46e5',
-                    timer: 5000,
-                    timerProgressBar: true
+                    showClass: { popup: 'animate__animated animate__fadeInDown' },
+                    hideClass: { popup: 'animate__animated animate__fadeOutUp' }
                 });
                 localStorage.setItem('lastWelcomeDate', today);
             } else {
-                // اگر کتابخانه هنوز لود نشده بود، از پیام ساده استفاده کن
-                alert("سلام! خوش اومدی. 🚀");
-                localStorage.setItem('lastWelcomeDate', today);
+                // اگر هنوز لود نشده، نیم ثانیه دیگه دوباره تلاش کن
+                setTimeout(showWelcomeMessage, 500);
             }
         }
-    }, 1000); // یک ثانیه صبر می‌کند تا همه چیز لود شود
+    }
+
+    // اجرای تابع وقتی صفحه کاملاً لود شد
+    window.addEventListener('load', showWelcomeMessage);
 
   let editId = null;
   let currentFilter = 'all';
