@@ -230,26 +230,7 @@
   let postponedState = JSON.parse(localStorage.getItem('tasks_postponed_v24')) || {};
   let perfectDays = JSON.parse(localStorage.getItem('perfect_days_list')) || [];
   let dailyData = JSON.parse(localStorage.getItem('daily_data_v24')) || {};
-       // نمایش پیام خوش‌آمدگویی هوشمند
-    setTimeout(function() {
-        const lastVisit = localStorage.getItem('lastWelcomeDate');
-        const today = new Date().toLocaleDateString('fa-IR');
-
-        if (lastVisit !== today) {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'سلام، خوش اومدی! 👋',
-                    text: 'امیدوارم امروز یکی از بهترین روزهات باشه و به تمام برنامه‌هات برسی. 🚀',
-                    icon: 'success',
-                    confirmButtonText: 'ممنون، شروع کنیم!',
-                    confirmButtonColor: '#4f46e5'
-                }).then(() => {
-                    localStorage.setItem('lastWelcomeDate', today);
-                });
-            }
-        }
-    }, 2000);
-
+    
   let editId = null;
   let currentFilter = 'all';
   let analysisOffset = 0; 
@@ -526,5 +507,31 @@
   }
   function resetForm() { editId = null; $('#taskTitle, #taskTags').val(''); $('.day-chip').removeClass('active'); $('#form-card').removeClass('edit-mode'); $('#saveBtn').text('افزودن به لیست'); $('#cancelBtn').hide(); toggleDays(); }
 </script>
+  <script>
+    // تست نهایی در انتهای فایل
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            const lastVisit = localStorage.getItem('lastWelcomeDate');
+            const today = new Date().toLocaleDateString('fa-IR');
+
+            if (lastVisit !== today) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'سلام، خوش اومدی! 👋',
+                        text: 'امیدوارم امروز یکی از بهترین روزهات باشه. 🚀',
+                        icon: 'success',
+                        confirmButtonText: 'بزن بریم!',
+                        confirmButtonColor: '#4f46e5'
+                    }).then(() => {
+                        localStorage.setItem('lastWelcomeDate', today);
+                    });
+                } else {
+                    console.error("SweetAlert library is not loaded yet!");
+                }
+            }
+        }, 3000); // ۳ ثانیه صبر برای اطمینان کامل
+    });
+</script>
+
 </body>
 </html>
