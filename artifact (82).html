@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پلنر هوشمند v24.16 - نسخه نهایی</title>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+  
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+
+    :root {
+      --primary: #6366f1; --primary-light: #eef2ff; --bg: #f8fafc; --card: #ffffff; --text: #1e293b;
+      --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --gray: #64748b;
+      --work-color: #3b82f6; --personal-color: #ec4899; --study-color: #8b5cf6;
+      --border: #e2e8f0;
+    }
+
+    body.dark-mode {
+      --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --border: #334155; --gray: #94a3b8; --primary-light: #312e81;
+    }
+
+    body { font-family: 'Vazirmatn', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; direction: rtl; transition: background 0.3s; }
+    .container { max-width: 500px; margin: 0 auto; }
+
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 5px; }
+    .top-btn { background: var(--card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 12px; cursor: pointer; color: var(--text); font-size: 0.85rem; font-family: 'Vazirmatn'; flex: 1; text-align: center; }
+
+    .pdp-body { border-radius: 24px !important; overflow: hidden !important; box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15) !important; border: none !important; font-family: 'Vazirmatn', sans-serif !important; padding: 10px !important; }
+    .pdp-header { background: var(--primary) !important; color: white !important; border-radius: 15px !important; margin-bottom: 8px; }
+    .pdp-header .title { font-weight: 900 !important; }
+    .pdp-day { border-radius: 12px !important; height: 35px !important; line-height: 35px !important; transition: 0.3s; font-weight: 500; }
+    .pdp-day:not(.not-current):hover { background: var(--primary-light) !important; color: var(--primary); }
+    .pdp-day.selected { background: var(--primary) !important; color: white !important; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4); }
+    
+    .user-stats { background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border-radius: 20px; padding: 15px; margin-bottom: 15px; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3); }
+    .level-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .xp-bar-bg { background: rgba(255,255,255,0.2); height: 8px; border-radius: 10px; overflow: hidden; }
+    .xp-bar-fill { background: #fff; height: 100%; width: 0%; transition: 0.5s; }
+    #motivationBox { font-size: 0.8rem; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 10px; text-align: center; line-height: 1.6; min-height: 40px; font-weight: 500; }
+
+    .card { background: var(--card); border-radius: 24px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid var(--border); }
+    .edit-mode { border: 2px solid var(--primary); background: var(--primary-light); }
+
+    h2 { font-size: 1rem; margin: 0; display: flex; align-items: center; gap: 8px; color: var(--primary); font-weight: 800; }
+    .card-subtitle { font-size: 0.72rem; color: var(--gray); margin-bottom: 15px; display: block; font-weight: 600; }
+    
+    input, select, textarea { width: 100%; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; padding: 10px; font-family: 'Vazirmatn'; font-size: 0.85rem; box-sizing: border-box; background: var(--bg); color: var(--text); transition: 0.3s; }
+    textarea { resize: none; height: 80px; }
+
+    .days-grid { display: none; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+    .day-chip { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 6px 2px; text-align: center; font-size: 0.7rem; font-weight: bold; cursor: pointer; color: var(--text); }
+    .day-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+    .btn { width: 100%; height: 45px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.95rem; font-family: 'Vazirmatn'; }
+    
+    .nav-container { display: flex; gap: 10px; justify-content: center; margin-bottom: 12px; }
+    .nav-btn { flex: 1; height: 40px; background: var(--card); color: var(--text); border: 1.5px solid var(--border); border-radius: 14px; font-size: 0.8rem; font-weight: 800; cursor: pointer; font-family: 'Vazirmatn'; }
+
+    .tab { padding: 6px 14px; background: var(--border); border-radius: 20px; font-size: 0.75rem; white-space: nowrap; cursor: pointer; font-weight: bold; color: var(--gray); border: 1px solid transparent; transition: 0.2s; display: flex; align-items: center; gap: 4px; }
+    .tab.active { background: var(--primary); color: white; }
+    .tab-badge { font-size: 0.65rem; background: var(--danger); color: white; padding: 1px 6px; border-radius: 10px; font-weight: 900; }
+
+    .task-card { background: var(--card); border-radius: 16px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; border-right: 5px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: 0.3s; }
+    .task-card.cat-work { border-right-color: var(--work-color); }
+    .task-card.cat-personal { border-right-color: var(--personal-color); }
+    .task-card.cat-study { border-right-color: var(--study-color); }
+    .task-card.completed { opacity: 0.55; transform: scale(0.98); }
+    
+    .check-btn { width: 24px; height: 24px; border: 2px solid var(--gray); border-radius: 8px; margin-left: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: transparent; }
+    .check-btn.active { background: var(--success); border-color: var(--success); color: white; }
+
+    .actions { display: flex; gap: 8px; margin-right: 10px; }
+    .act-icon { cursor: pointer; font-size: 1rem; opacity: 0.6; transition: 0.2s; }
+    .act-icon:hover { opacity: 1; transform: scale(1.1); }
+
+    .p-bar-bg { background: var(--border); height: 10px; border-radius: 10px; overflow: hidden; }
+    .p-bar-fill { background: var(--success); height: 100%; width: 0%; transition: 0.6s ease-out; }
+
+    .mood-btn { font-size: 1.5rem; cursor: pointer; filter: grayscale(1); transition: 0.3s; opacity: 0.4; }
+    .mood-btn.active { filter: grayscale(0); opacity: 1; transform: scale(1.2); }
+
+    .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 10px; font-family: 'Vazirmatn'; }
+    .week-day { text-align: center; font-size: 0.65rem; font-weight: 700; color: var(--gray); }
+    .day-status { height: 12px; border-radius: 4px; margin-bottom: 5px; border: 1px solid rgba(0,0,0,0.03); }
+    .status-perfect { background: var(--success); }
+    .status-partial { background: var(--warning); }
+    .status-empty { background: var(--danger); }
+    .status-none { background: var(--border); }
+    
+    .week-nav-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: var(--bg); padding: 6px 12px; border-radius: 15px; border: 1px solid var(--border); }
+    .week-nav-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; color: var(--primary); font-weight: bold; font-family: 'Vazirmatn'; }
+
+    @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(0.92); } 100% { transform: scale(1); } }
+    .pop-effect { animation: pop 0.3s ease; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <button class="top-btn" onclick="toggleDarkMode()" id="themeBtn" style="flex: 0.5;">🌙 شب/روز</button>
+    <button class="top-btn" onclick="exportBackup()">📥 خروجی بک‌آپ</button>
+    <button class="top-btn" onclick="document.getElementById('importInput').click()">📤 بارگذاری بک‌آپ</button>
+    <input type="file" id="importInput" style="display:none" onchange="importBackup(this)">
+  </div>
+  
+  <div class="user-stats">
+    <div class="level-row">
+      <span style="font-weight: 900;">🏆 سطح <span id="userLevel">۱</span></span>
+      <span id="commitmentText" style="font-size: 0.8rem;">۰ روز پایبندی</span>
+    </div>
+    <div class="xp-bar-bg"><div id="xpBar" class="xp-bar-fill" style="width: 0%"></div></div>
+    <div id="motivationBox">برای شروع یک روز عالی آماده‌ای؟ 🌱</div>
+  </div>
+
+  <div id="form-card" class="card">
+    <h2 id="form-title">✨ ثبت برنامه جدید</h2>
+    <span class="card-subtitle">تسک‌های خود را با جزییات وارد کنید</span>
+    <input type="text" id="taskTitle" placeholder="چه کاری باید انجام شود؟">
+    <input type="text" id="taskTags" placeholder="برچسب‌ها (مثلاً: فوری، مهم)">
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <select id="taskCategory">
+        <option value="personal">🏠 شخصی</option>
+        <option value="work">💼 کاری</option>
+        <option value="study">📚 آموزشی</option>
+      </select>
+      <select id="taskPriority">
+        <option value="low">🟢 عادی</option>
+        <option value="medium">🟡 مهم</option>
+        <option value="high">🔴 خیلی فوری</option>
+      </select>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <select id="repeatType" onchange="toggleDays()">
+        <option value="once">فقط امروز</option>
+        <option value="daily">هر روز</option>
+        <option value="weekly">روزهای خاص هفته</option>
+      </select>
+      <input type="text" id="startDatePicker" readonly style="text-align: center; color: var(--primary); font-weight: 800; cursor:pointer;">
+    </div>
+    <p id="startDateLabel" style="text-align:center; font-size:0.7rem; color:var(--gray); margin-top:-5px; margin-bottom:10px; font-weight:900;"></p>
+
+    <div id="daysGrid" class="days-grid">
+      <div class="day-chip" data-value="شنبه">شنبه</div>
+      <div class="day-chip" data-value="یکشنبه">۱شنبه</div>
+      <div class="day-chip" data-value="دوشنبه">۲شنبه</div>
+      <div class="day-chip" data-value="سه‌شنبه">۳شنبه</div>
+      <div class="day-chip" data-value="چهارشنبه">۴شنبه</div>
+      <div class="day-chip" data-value="پنجشنبه">۵شنبه</div>
+      <div class="day-chip" data-value="جمعه">جمعه</div>
+    </div>
+
+    <button id="saveBtn" class="btn" onclick="saveTask()">افزودن به لیست</button>
+    <button id="cancelBtn" class="btn" style="display:none; background:#94a3b8; margin-top:5px;" onclick="resetForm()">انصراف</button>
+  </div>
+
+  <div class="card">
+    <div style="position: relative; margin-bottom: 12px;">
+      <input type="text" id="searchInput" placeholder="جستجو در عنوان یا برچسب‌ها..." onkeyup="renderTasks()" style="padding-right: 35px; border-radius: 20px; margin-bottom: 0;">
+      <span style="position: absolute; right: 12px; top: 10px; opacity: 0.3;">🔍</span>
+    </div>
+
+    <input type="text" id="viewDatePicker" readonly style="text-align: center; border: none; background: var(--bg); font-weight: 900; color: var(--primary); font-size: 1.1rem; cursor: pointer; border-radius: 12px; height: 40px; margin-bottom: 10px;">
+    
+    <div class="nav-container">
+        <button class="nav-btn" onclick="changeDate(-1)">روز قبل</button>
+        <button class="nav-btn" onclick="changeDate(1)">روز بعد</button>
+    </div>
+
+    <p id="fullDateDisplay" style="text-align: center; font-size: 0.8rem; margin-top: -8px; color: var(--gray); font-weight: 800;"></p>
+
+    <div class="filter-tabs" id="categoryFilters" style="display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 12px 0;">
+      <div class="tab active" data-filter="all" onclick="filterBy('all', this)">همه <span id="cnt-all" class="tab-badge">۰</span></div>
+      <div class="tab" data-filter="work" onclick="filterBy('work', this)">💼 کاری <span id="cnt-work" class="tab-badge">۰</span></div>
+      <div class="tab" data-filter="personal" onclick="filterBy('personal', this)">🏠 شخصی <span id="cnt-personal" class="tab-badge">۰</span></div>
+      <div class="tab" data-filter="study" onclick="filterBy('study', this)">📚 آموزشی <span id="cnt-study" class="tab-badge">۰</span></div>
+    </div>
+
+    <div id="taskList"></div>
+  </div>
+
+  <div class="card">
+    <h2>📊 مرور عملکرد هفته</h2>
+    <span id="weekDateRange" class="card-subtitle" style="color: var(--primary); font-weight: 800;">بازه زمانی...</span>
+    
+    <div class="week-nav-container">
+      <button class="week-nav-btn" onclick="changeAnalysisWeek(-7)">◀ هفته قبل</button>
+      <button class="week-nav-btn" onclick="resetAnalysisWeek()" style="color: var(--text);">هفته جاری</button>
+      <button class="week-nav-btn" onclick="changeAnalysisWeek(7)">هفته بعد ▶</button>
+    </div>
+
+    <div id="weekStats" style="font-size: 0.8rem; color: var(--text); margin-bottom: 12px; font-weight: 700; text-align: center;"></div>
+    <div class="week-grid" id="weekGridContainer"></div>
+  </div>
+
+  <div class="card">
+    <h2>📝 یادداشت روزانه</h2>
+    <div style="display: flex; justify-content: space-around; margin: 10px 0 15px 0;">
+      <span class="mood-btn" data-mood="happy" onclick="setMood('happy')">🤩</span>
+      <span class="mood-btn" data-mood="good" onclick="setMood('good')">😊</span>
+      <span class="mood-btn" data-mood="neutral" onclick="setMood('neutral')">😐</span>
+      <span class="mood-btn" data-mood="sad" onclick="setMood('sad')">😔</span>
+      <span class="mood-btn" data-mood="tired" onclick="setMood('tired')">😴</span>
+    </div>
+    <textarea id="dailyNote" placeholder="دلیل عدم انجام برنامه‌ها یا اتفاقات خوب امروز..."></textarea>
+    <button class="btn" style="height: 38px; font-size: 0.85rem; background: var(--gray);" onclick="saveDailyNote()">ذخیره یادداشت و مود</button>
+  </div>
+
+  <div class="card">
+    <h2>📈 پیشرفت برنامه‌ها</h2>
+    <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:900; margin-bottom:8px; color: var(--gray);">
+      <span id="progPercent">۰٪ انجام شده</span>
+      <span id="progCount">۰ از ۰ تسک</span>
+    </div>
+    <div class="p-bar-bg"><div id="dailyProgressBar" class="p-bar-fill"></div></div>
+  </div>
+
+</div>
+
+<script>
+  let tasks = JSON.parse(localStorage.getItem('tasks_v24')) || [];
+  let completedState = JSON.parse(localStorage.getItem('tasks_done_v24')) || {};
+  let postponedState = JSON.parse(localStorage.getItem('tasks_postponed_v24')) || {};
+  let perfectDays = JSON.parse(localStorage.getItem('perfect_days_list')) || [];
+  let dailyData = JSON.parse(localStorage.getItem('daily_data_v24')) || {};
+  
+  let editId = null;
+  let currentFilter = 'all';
+  let analysisOffset = 0; 
+  const prioMap = { low: "🟢 عادی", medium: "🟡 مهم", high: "🔴 خیلی فوری" };
+
+  const successMessages = ["دمت گرم! عالی پیش میری 🌟", "تو داری تبدیل می‌شی به آدمی که به خودش قول می‌ده و عمل می‌کنه 🔥", "یک قدم دیگه به هدف نزدیک‌تر شدی 💪", "استمرار تو، آینده‌ت رو می‌سازه 🌱", "فوق‌العاده‌ای! این یعنی انضباط واقعی 💎", "تیک زدن همه تسک‌ها حس قدرت می‌ده، نه؟ 🚀", "برنده کسیه که وقتی خسته‌ست هم ادامه می‌ده! 🏆", "تو قهرمان امروز خودت بودی! ✨", "نظم یعنی آزادی؛ و تو امروز آزاد بودی 🕊️", "این لیستِ تیک خورده، زیباترین نقاشی دنیاست! 🎨"];
+  const failMessages = ["امروز کامل نشد، ولی فردا یه بوم سفیده 🎨", "یه لغزش کوچیک فدای سرت؛ مهم اینه فردا برگردی 💙", "یادت نره چرا شروع کردی؛ فردا جبران کن 🌙", "کمال‌گرا نباش، مهم اینه که تلاش کردی 🌧️", "شکست یعنی فرصت دوباره برای شروع هوشمندانه‌تر 💎", "هر شب، فرصتی برای تولد دوباره در صبح فرداست 🌅", "گاهی لازمه بایستی تا نفس بگیری، اما فردا دوباره بدو 🏃‍♂️", "اشکالی نداره، تعهد یه مسابقه‌ست نه یک سرعت ۱۰۰ متر! 🏁", "اشتباهاتت رو ببخش، اما فردا رو جدی‌تر بگیر 🔥", "فردا همون روزیه که قراره بترکونی! 🚀"];
+
+  const toEn = s => (s || '').toString().replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+  const toFa = n => (n || '').toString().replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+
+  function normalizeDateStr(dateStr) { return toEn(dateStr || '').trim(); }
+
+  function getDayName(dateStr) {
+    const clean = normalizeDateStr(dateStr);
+    const pDate = new persianDate(clean.split('/').map(Number));
+    const days = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
+    return days[pDate.toDate().getDay()];
+  }
+
+  $(document).ready(function() {
+    const opt = { format: 'YYYY/MM/DD', autoClose: true, initialValue: true, onSelect: function() { renderTasks(); updateStartDateLabel(); loadDailyNote(); } };
+    $("#startDatePicker").persianDatepicker(opt);
+    $("#viewDatePicker").persianDatepicker(opt);
+    const today = new persianDate().format('YYYY/MM/DD');
+    $("#viewDatePicker").val(toFa(today));
+    $("#startDatePicker").val(toFa(today));
+    
+    if(localStorage.getItem('theme_v24') === 'dark') toggleDarkMode(true);
+
+    updateStartDateLabel();
+    $('.day-chip').click(function() { $(this).toggleClass('active'); });
+    loadDailyNote();
+    renderTasks();
+  });
+
+  function toggleDarkMode(force) {
+    if(force === true) {
+        $('body').addClass('dark-mode');
+        $('#themeBtn').text('☀️ حالت روز');
+    } else {
+        $('body').toggleClass('dark-mode');
+        const isDark = $('body').hasClass('dark-mode');
+        $('#themeBtn').text(isDark ? '☀️ حالت روز' : '🌙 حالت شب');
+        localStorage.setItem('theme_v24', isDark ? 'dark' : 'light');
+    }
+  }
+
+  function exportBackup() {
+    const data = { tasks, completedState, postponedState, perfectDays, dailyData };
+    const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `smart_planner_backup_${normalizeDateStr(new persianDate().format('YYYY-MM-DD'))}.json`;
+    a.click();
+  }
+
+  function importBackup(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (confirm('با بارگذاری این فایل، تمام داده‌های فعلی جایگزین خواهند شد. ادامه می‌دهید؟')) {
+          localStorage.setItem('tasks_v24', JSON.stringify(data.tasks || []));
+          localStorage.setItem('tasks_done_v24', JSON.stringify(data.completedState || {}));
+          localStorage.setItem('tasks_postponed_v24', JSON.stringify(data.postponedState || {}));
+          localStorage.setItem('perfect_days_list', JSON.stringify(data.perfectDays || []));
+          localStorage.setItem('daily_data_v24', JSON.stringify(data.dailyData || {}));
+          location.reload();
+        }
+      } catch (err) { alert('فایل انتخاب شده معتبر نیست!'); }
+    };
+    reader.readAsText(file);
+  }
+
+  function changeDate(days) {
+    let currentVal = normalizeDateStr($("#viewDatePicker").val());
+    let newDate = new persianDate(currentVal.split('/').map(Number)).add('days', days).format('YYYY/MM/DD');
+    $("#viewDatePicker").val(toFa(newDate));
+    loadDailyNote(); renderTasks();
+  }
+
+  function changeAnalysisWeek(days) { analysisOffset += days; renderWeekAnalysis(); }
+  function resetAnalysisWeek() { analysisOffset = 0; renderWeekAnalysis(); }
+
+  function setMood(m) {
+    $('.mood-btn').removeClass('active');
+    $(`.mood-btn[data-mood="${m}"]`).addClass('active');
+  }
+
+  function saveDailyNote() {
+    const date = normalizeDateStr($("#viewDatePicker").val());
+    dailyData[date] = { note: $('#dailyNote').val(), mood: $('.mood-btn.active').data('mood') };
+    localStorage.setItem('daily_data_v24', JSON.stringify(dailyData));
+    alert('یادداشت و مود با موفقیت ثبت شد ✅');
+  }
+
+  function loadDailyNote() {
+    const date = normalizeDateStr($("#viewDatePicker").val());
+    const data = dailyData[date] || { note: '', mood: '' };
+    $('#dailyNote').val(data.note || '');
+    $('.mood-btn').removeClass('active');
+    if(data.mood) $(`.mood-btn[data-mood="${data.mood}"]`).addClass('active');
+  }
+
+  function filterBy(cat, el) {
+    currentFilter = cat;
+    $('.tab').removeClass('active');
+    $(el).addClass('active');
+    renderTasks();
+  }
+
+  function renderTasks() {
+    const date = normalizeDateStr($("#viewDatePicker").val());
+    const dayName = getDayName(date);
+    const dateVal = parseInt(date.replace(/\//g, ''));
+    const search = ($('#searchInput').val() || '').toLowerCase();
+    $('#fullDateDisplay').text(toFa(date) + ' - ' + dayName);
+    const container = $('#taskList').empty();
+
+    let counts = { all: 0, work: 0, personal: 0, study: 0 };
+    let visibleItems = [];
+    tasks.forEach(t => {
+      const startVal = parseInt(t.startDate.replace(/\//g, ''));
+      const key = `${date}_${t.id}`;
+      let isNormalVisible = (dateVal >= startVal) && (t.repeat === 'once' ? dateVal === startVal : t.repeat === 'daily' || (t.repeat === 'weekly' && t.days.includes(dayName)));
+      
+      let isActuallyVisible = false;
+      if (isNormalVisible && !postponedState[key]) isActuallyVisible = true;
+      else {
+          Object.entries(postponedState).forEach(([pk, pv]) => { 
+              if (normalizeDateStr(pv) === date && pk.endsWith(`_${t.id}`)) isActuallyVisible = true; 
+          });
+      }
+
+      if(isActuallyVisible) {
+          counts.all++;
+          counts[t.category]++;
+          
+          if (currentFilter !== 'all' && t.category !== currentFilter) return;
+          if (search && !t.title.toLowerCase().includes(search) && !(t.tags || '').toLowerCase().includes(search)) return;
+          
+          if (isNormalVisible && !postponedState[key]) visibleItems.push({ t, key, isPostponed: false });
+          else {
+              Object.entries(postponedState).forEach(([pk, pv]) => { 
+                  if (normalizeDateStr(pv) === date && pk.endsWith(`_${t.id}`)) visibleItems.push({ t, key: pk, isPostponed: true }); 
+              });
+          }
+      }
+    });
+
+    $('#cnt-all').text(toFa(counts.all));
+    $('#cnt-work').text(toFa(counts.work));
+    $('#cnt-personal').text(toFa(counts.personal));
+    $('#cnt-study').text(toFa(counts.study));
+
+    let doneCount = 0;
+    visibleItems.forEach(item => {
+      const isDone = !!completedState[item.key];
+      const safeKey = item.key.replace(/\//g, ''); // پاکسازی اسلش برای آیدی
+      if (isDone) doneCount++;
+      container.append(`
+        <div class="task-card cat-${item.t.category} ${isDone ? 'completed' : ''}" id="card-${safeKey}">
+          <div class="check-btn ${isDone ? 'active' : ''}" onclick="toggleDone('${item.key}')">${isDone ? '✓' : ''}</div>
+          <div style="flex-grow:1">
+            <span style="font-weight:bold; font-size:0.9rem">${item.t.title} ${item.isPostponed ? '<small style="color:orange; font-size:0.65rem;"> (انتقالی)</small>' : ''}</span>
+            <div style="font-size:0.7rem; color:var(--gray)">${item.t.tags ? '🏷️ ' + item.t.tags + ' | ' : ''} 🔥 ${prioMap[item.t.priority]}</div>
+          </div>
+          <div class="actions">
+            <span class="act-icon" onclick="editTask(${item.t.id})">✏️</span>
+            <span class="act-icon" onclick="postponeTask('${item.key}')">➡️</span>
+            <span class="act-icon" onclick="deleteTask(${item.t.id})">🗑️</span>
+          </div>
+        </div>
+      `);
+    });
+
+    const percent = visibleItems.length > 0 ? Math.round((doneCount / visibleItems.length) * 100) : 0;
+    if (percent === 100 && visibleItems.length > 0) {
+        if (!perfectDays.includes(date)) { perfectDays.push(date); localStorage.setItem('perfect_days_list', JSON.stringify(perfectDays)); }
+        $('#motivationBox').text(successMessages[Math.floor(Math.random() * successMessages.length)]);
+    } else {
+        if (perfectDays.includes(date)) { perfectDays = perfectDays.filter(d => d !== date); localStorage.setItem('perfect_days_list', JSON.stringify(perfectDays)); }
+        $('#motivationBox').text(visibleItems.length > 0 ? failMessages[Math.floor(Math.random() * failMessages.length)] : "امروز برنامه‌ای نداری؛ برای فردا نقشه بکش! ✨");
+    }
+
+    $('#dailyProgressBar').css('width', percent + '%');
+    $('#progPercent').text(toFa(percent) + '٪ انجام شده');
+    $('#progCount').text(`${toFa(doneCount)} از ${toFa(visibleItems.length)} تسک`);
+    if (visibleItems.length === 0) container.append('<p style="text-align:center; color:#94a3b8; font-size:0.8rem;">لیست خالی است ✨</p>');
+    updateCommitmentUI();
+    renderWeekAnalysis();
+  }
+
+  function renderWeekAnalysis() {
+    const container = $('#weekGridContainer').empty();
+    const todayViewDate = normalizeDateStr($("#viewDatePicker").val());
+    const dateParts = todayViewDate.split('/').map(Number);
+    let saturday = new persianDate(dateParts).startOf('week').add('days', analysisOffset);
+    let friday = new persianDate(saturday.toArray()).add('days', 6);
+    $('#weekDateRange').text(`از شنبه ${toFa(saturday.format('YYYY/MM/DD'))} تا جمعه ${toFa(friday.format('YYYY/MM/DD'))}`);
+    let weekDone = 0, weekTotal = 0;
+    const dayNamesShort = ['ش', '۱ش', '۲ش', '۳ش', '۴ش', '۵ش', 'ج'];
+    for (let i = 0; i < 7; i++) {
+      let loopDay = new persianDate(saturday.toArray()).add('days', i);
+      let dn = toEn(loopDay.format('YYYY/MM/DD'));
+      let dayTasks = 0, dayDone = 0;
+      tasks.forEach(t => {
+        const startVal = parseInt(t.startDate.replace(/\//g, ''));
+        const dVal = parseInt(dn.replace(/\//g, ''));
+        const dayName = getDayName(dn);
+        const key = `${dn}_${t.id}`;
+        if (dVal >= startVal && (t.repeat === 'once' ? dVal === startVal : t.repeat === 'daily' || (t.repeat === 'weekly' && t.days.includes(dayName)))) {
+          dayTasks++; if(completedState[key]) dayDone++;
+        }
+      });
+      let statusClass = 'status-none';
+      if (dayTasks > 0) {
+        if (dayDone === dayTasks) statusClass = 'status-perfect';
+        else if (dayDone > 0) statusClass = 'status-partial';
+        else statusClass = 'status-empty';
+      }
+      weekDone += dayDone; weekTotal += dayTasks;
+      container.append(`<div class="week-day"><div class="day-status ${statusClass}"></div>${dayNamesShort[i]}</div>`);
+    }
+    $('#weekStats').text(`تحلیل هفته: ${toFa(weekDone)} تیک موفق از ${toFa(weekTotal)} برنامه`);
+  }
+
+  function saveTask() {
+    const title = $('#taskTitle').val().trim();
+    if (!title) return alert('عنوان الزامی!');
+    const task = { id: editId || Date.now(), title, tags: $('#taskTags').val(), category: $('#taskCategory').val(), priority: $('#taskPriority').val(), repeat: $('#repeatType').val(), startDate: toEn($('#startDatePicker').val()), days: [] };
+    if (task.repeat === 'weekly') $('.day-chip.active').each(function() { task.days.push($(this).data('value')); });
+    if (editId) tasks = tasks.map(t => t.id === editId ? task : t); else tasks.push(task);
+    localStorage.setItem('tasks_v24', JSON.stringify(tasks));
+    resetForm(); renderTasks();
+  }
+
+  function editTask(id) {
+    const t = tasks.find(x => x.id === id);
+    if (!t) return;
+    editId = id;
+    $('#taskTitle').val(t.title); $('#taskTags').val(t.tags || ''); $('#taskCategory').val(t.category); $('#taskPriority').val(t.priority); $('#repeatType').val(t.repeat);
+    $('#startDatePicker').val(toFa(t.startDate)); updateStartDateLabel();
+    $('.day-chip').removeClass('active');
+    if (Array.isArray(t.days)) t.days.forEach(d => $(`.day-chip[data-value="${d}"]`).addClass('active'));
+    toggleDays(); $('#form-card').addClass('edit-mode'); $('#saveBtn').text('بروزرسانی'); $('#cancelBtn').show();
+    window.scrollTo(0, 0);
+  }
+
+  function toggleDone(key) { 
+    const safeKey = key.replace(/\//g, ''); // پاکسازی اسلش برای سلکتور
+    $(`#card-${safeKey}`).addClass('pop-effect');
+    setTimeout(() => {
+        completedState[key] = !completedState[key]; 
+        localStorage.setItem('tasks_done_v24', JSON.stringify(completedState)); 
+        renderTasks(); 
+    }, 250);
+  }
+
+  function postponeTask(key) { const date = normalizeDateStr($("#viewDatePicker").val()); postponedState[key] = toEn(new persianDate(date.split('/').map(Number)).add('days', 1).format('YYYY/MM/DD')); localStorage.setItem('tasks_postponed_v24', JSON.stringify(postponedState)); renderTasks(); }
+  
+  function deleteTask(id) { if(confirm('آیا از حذف این تسک اطمینان دارید؟')) { tasks = tasks.filter(t => t.id !== id); localStorage.setItem('tasks_v24', JSON.stringify(tasks)); renderTasks(); } }
+  
+  function toggleDays() { $('#daysGrid').css('display', $('#repeatType').val() === 'weekly' ? 'grid' : 'none'); }
+  function updateStartDateLabel() { $('#startDateLabel').text(getDayName($('#startDatePicker').val())); }
+  function updateCommitmentUI() {
+    const total = perfectDays.length, level = Math.floor(total/7)+1, days = total%7;
+    $('#userLevel').text(toFa(level)); $('#commitmentText').text(`${toFa(Math.floor(total/7))} هفته و ${toFa(days)} روز پایبندی`);
+    $('#xpBar').css('width', (days/7*100)+'%');
+  }
+  function resetForm() { editId = null; $('#taskTitle, #taskTags').val(''); $('.day-chip').removeClass('active'); $('#form-card').removeClass('edit-mode'); $('#saveBtn').text('افزودن به لیست'); $('#cancelBtn').hide(); toggleDays(); }
+</script>
+</body>
+</html>
