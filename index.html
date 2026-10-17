@@ -97,6 +97,14 @@
 
     @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(0.92); } 100% { transform: scale(1); } }
     .pop-effect { animation: pop 0.3s ease; }
+
+    /* --- هشدار و دوره‌ی دارویی --- */
+    .mini-label { display: block; font-size: 0.7rem; color: var(--gray); font-weight: 700; margin: 0 2px 4px; }
+    .interval-box { display: none; background: var(--primary-light); border: 1px dashed var(--primary); border-radius: 14px; padding: 10px; margin-bottom: 10px; }
+    .interval-box input { background: var(--card); }
+    .interval-preview { font-size: 0.72rem; color: var(--primary); font-weight: 800; text-align: center; line-height: 1.8; margin: 0; }
+    .overdue { color: var(--danger); font-weight: 800; }
+    .notif-note { font-size: 0.68rem; color: var(--gray); text-align: center; margin: 0 0 14px; line-height: 1.7; }
   </style>
 </head>
 <body>
@@ -108,6 +116,45 @@
     <button class="top-btn" onclick="document.getElementById('importInput').click()">📤 بارگذاری بک‌آپ</button>
     <input type="file" id="importInput" style="display:none" onchange="importBackup(this)">
   </div>
+  <div style="margin-bottom: 6px;"><button class="top-btn" id="notifBtn" onclick="onNotifBtn()" style="width: 100%;">🔔 فعال‌سازی هشدار</button></div>
+  <p class="notif-note">نوتیف Chrome فقط وقتی میاد که Chrome زنده باشه. اگه گوشی قفل بشه یا Chrome بسته بشه، دیر یا هیچ‌وقت نمیاد. برای اطمینان بیشتر ntfy رو هم فعال کن.</p>
+  <details id="ntfyBox" class="card" style="padding: 12px 18px;">
+    <summary style="cursor: pointer; font-weight: 800; color: var(--primary); font-size: 0.9rem;">📱 نوتیف مطمئن‌تر روی اندروید (ntfy)</summary>
+    <div style="margin-top: 12px; font-size: 0.75rem; line-height: 1.9;">
+      <ol style="padding-right: 18px; margin: 0 0 12px;">
+        <li>اپ <b>ntfy</b> رو روی گوشی نصب کن.</li>
+        <li>توش روی «+» بزن و اسم کانال پایین رو وارد کن (Subscribe).</li>
+        <li>این‌جا «فعال» رو بزن و «تست و همگام‌سازی» رو بزن.</li>
+      </ol>
+      <label class="mini-label" for="ntfyServer">آدرس سرور</label>
+      <input type="text" id="ntfyServer" dir="ltr" style="text-align: left;" onchange="saveNtfyCfg()">
+      <label class="mini-label" for="ntfyTopic">اسم کانال (مثل رمزه، پیش‌فرضش تصادفیه؛ به کسی نده)</label>
+      <input type="text" id="ntfyTopic" dir="ltr" style="text-align: left;" onchange="saveNtfyCfg()">
+      <label style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; font-weight: 700;"><input type="checkbox" id="ntfyEnabled" style="width: auto; margin: 0;" onchange="saveNtfyCfg()"> ارسال هشدارها به ntfy فعال باشه</label>
+      <label style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;"><input type="checkbox" id="ntfyChromeToo" style="width: auto; margin: 0;" onchange="saveNtfyCfg()"> نوتیف خود Chrome هم بیاد (روشن بمونه بهتره؛ ممکنه یه هشدار دوبار بیاد)</label>
+      <button class="btn" style="height: 38px; font-size: 0.85rem;" onclick="ntfyTest()">تست و همگام‌سازی</button>
+      <p id="ntfyStatus" class="notif-note" style="margin: 10px 0 0;"></p>
+    </div>
+  </details>
+  <details id="smsBox" class="card" style="padding: 12px 18px;">
+    <summary style="cursor: pointer; font-weight: 800; color: var(--primary); font-size: 0.9rem;">📩 پیامک هشدار (کاوه‌نگار)، بدون نیاز به VPN</summary>
+    <div style="margin-top: 12px; font-size: 0.75rem; line-height: 1.9;">
+      <ol style="padding-right: 18px; margin: 0 0 12px;">
+        <li>تو kavenegar.com ثبت‌نام کن و از پنل، «کلید API» رو بردار.</li>
+        <li>کلید و شماره‌ی موبایلت رو این‌جا وارد کن و «فعال» رو بزن.</li>
+        <li>موقع ساخت هر تسک، فقط اگه تیک «پیامک هم بفرست» رو بزنی براش پیامک میره.</li>
+      </ol>
+      <label class="mini-label" for="smsKey">کلید API (فقط توی همین مرورگر ذخیره می‌شه؛ جای دیگه‌ای، مخصوصاً GitHub، نذارش)</label>
+      <input type="password" id="smsKey" dir="ltr" autocomplete="off" style="text-align: left;" onchange="saveSmsCfg()">
+      <label class="mini-label" for="smsPhone">شماره‌ی موبایل خودت</label>
+      <input type="tel" id="smsPhone" dir="ltr" placeholder="09123456789" style="text-align: left;" onchange="saveSmsCfg()">
+      <label class="mini-label" for="smsSender">شماره‌ی خط ارسال‌کننده (اختیاری؛ خالی بذار تا خط پیش‌فرض)</label>
+      <input type="text" id="smsSender" dir="ltr" style="text-align: left;" onchange="saveSmsCfg()">
+      <label style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; font-weight: 700;"><input type="checkbox" id="smsEnabled" style="width: auto; margin: 0;" onchange="saveSmsCfg()"> ارسال پیامک برای تسک‌های تیک‌دار فعال باشه</label>
+      <button class="btn" style="height: 38px; font-size: 0.85rem;" onclick="smsTest()">ارسال پیامک تست</button>
+      <p id="smsStatus" class="notif-note" style="margin: 10px 0 0;"></p>
+    </div>
+  </details>
   
   <div class="user-stats">
     <div class="level-row">
@@ -142,10 +189,60 @@
         <option value="once">فقط امروز</option>
         <option value="daily">هر روز</option>
         <option value="weekly">روزهای خاص هفته</option>
+        <option value="interval">💊 دوره‌ای</option>
       </select>
       <input type="text" id="startDatePicker" readonly style="text-align: center; color: var(--primary); font-weight: 800; cursor:pointer;">
     </div>
     <p id="startDateLabel" style="text-align:center; font-size:0.7rem; color:var(--gray); margin-top:-5px; margin-bottom:10px; font-weight:900;"></p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <div>
+        <label class="mini-label" for="taskTime">⏰ ساعت (اختیاری)</label>
+        <input type="time" id="taskTime" oninput="updateIntervalPreview()" style="text-align: center;">
+      </div>
+      <div>
+        <label class="mini-label" for="taskRemind">🔔 یادآوری</label>
+        <select id="taskRemind">
+          <option value="0">سر وقت</option>
+          <option value="5">۵ دقیقه قبل</option>
+          <option value="10">۱۰ دقیقه قبل</option>
+          <option value="30">۳۰ دقیقه قبل</option>
+          <option value="60">۱ ساعت قبل</option>
+          <option value="120">۲ ساعت قبل</option>
+          <option value="1440">۱ روز قبل</option>
+          <option value="eve">شب قبل (ساعت ۲۰:۰۰)</option>
+          <option value="off">بدون هشدار</option>
+        </select>
+      </div>
+    </div>
+    <label class="mini-label" for="taskRemind2">🔔 یادآوری دوم (اختیاری)</label>
+    <select id="taskRemind2">
+          <option value="off">ندارم</option>
+          <option value="0">سر وقت</option>
+          <option value="5">۵ دقیقه قبل</option>
+          <option value="10">۱۰ دقیقه قبل</option>
+          <option value="30">۳۰ دقیقه قبل</option>
+          <option value="60">۱ ساعت قبل</option>
+          <option value="120">۲ ساعت قبل</option>
+          <option value="1440">۱ روز قبل</option>
+          <option value="eve">شب قبل (ساعت ۲۰:۰۰)</option>
+    </select>
+    <label style="display: flex; gap: 8px; align-items: center; margin: 6px 0 4px; font-weight: 700; font-size: 0.8rem;"><input type="checkbox" id="taskSms" style="width: auto; margin: 0;" onchange="updateSmsHint()"> 📩 پیامک هم بفرست (زودترین یادآوری)</label>
+    <p id="smsHint" class="notif-note" style="text-align: right; margin: 0 0 8px;"></p>
+
+    <div id="intervalBox" class="interval-box">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div>
+          <label class="mini-label" for="intervalHours">هر چند ساعت؟</label>
+          <input type="number" id="intervalHours" min="1" max="24" value="8" oninput="updateIntervalPreview()" style="text-align: center; margin-bottom: 6px;">
+        </div>
+        <div>
+          <label class="mini-label" for="durationDays">به مدت چند روز؟</label>
+          <input type="number" id="durationDays" min="1" max="60" value="5" oninput="updateIntervalPreview()" style="text-align: center; margin-bottom: 6px;">
+        </div>
+      </div>
+      <p id="intervalPreview" class="interval-preview"></p>
+    </div>
 
     <div id="daysGrid" class="days-grid">
       <div class="day-chip" data-value="شنبه">شنبه</div>
@@ -252,7 +349,7 @@
   }
 
   $(document).ready(function() {
-    const opt = { format: 'YYYY/MM/DD', autoClose: true, initialValue: true, onSelect: function() { renderTasks(); updateStartDateLabel(); loadDailyNote(); } };
+    const opt = { format: 'YYYY/MM/DD', autoClose: true, initialValue: true, onSelect: function() { renderTasks(); updateStartDateLabel(); loadDailyNote(); updateIntervalPreview(); } };
     $("#startDatePicker").persianDatepicker(opt);
     $("#viewDatePicker").persianDatepicker(opt);
     const today = new persianDate().format('YYYY/MM/DD');
@@ -265,6 +362,8 @@
     $('.day-chip').click(function() { $(this).toggleClass('active'); });
     loadDailyNote();
     renderTasks();
+    updateIntervalPreview();
+    initReminders();
   });
 
   function toggleDarkMode(force) {
@@ -356,33 +455,18 @@
 
     let counts = { all: 0, work: 0, personal: 0, study: 0 };
     let visibleItems = [];
-    tasks.forEach(t => {
-      const startVal = parseInt(t.startDate.replace(/\//g, ''));
-      const key = `${date}_${t.id}`;
-      let isNormalVisible = (dateVal >= startVal) && (t.repeat === 'once' ? dateVal === startVal : t.repeat === 'daily' || (t.repeat === 'weekly' && t.days.includes(dayName)));
-      
-      let isActuallyVisible = false;
-      if (isNormalVisible && !postponedState[key]) isActuallyVisible = true;
-      else {
-          Object.entries(postponedState).forEach(([pk, pv]) => { 
-              if (normalizeDateStr(pv) === date && pk.endsWith(`_${t.id}`)) isActuallyVisible = true; 
-          });
-      }
-
-      if(isActuallyVisible) {
-          counts.all++;
-          counts[t.category]++;
-          
-          if (currentFilter !== 'all' && t.category !== currentFilter) return;
-          if (search && !t.title.toLowerCase().includes(search) && !(t.tags || '').toLowerCase().includes(search)) return;
-          
-          if (isNormalVisible && !postponedState[key]) visibleItems.push({ t, key, isPostponed: false });
-          else {
-              Object.entries(postponedState).forEach(([pk, pv]) => { 
-                  if (normalizeDateStr(pv) === date && pk.endsWith(`_${t.id}`)) visibleItems.push({ t, key: pk, isPostponed: true }); 
-              });
-          }
-      }
+    occurrencesFor(date).forEach(item => {
+      counts.all++;
+      counts[item.t.category]++;
+      if (currentFilter !== 'all' && item.t.category !== currentFilter) return;
+      if (search && !item.t.title.toLowerCase().includes(search) && !(item.t.tags || '').toLowerCase().includes(search)) return;
+      visibleItems.push(item);
+    });
+    // تسک‌های ساعت‌دار اول و به ترتیب ساعت؛ بقیه به همون ترتیب قبلی
+    visibleItems.sort((a, b) => {
+      const ta = a.t.time || '', tb = b.t.time || '';
+      if (ta && tb) return ta < tb ? -1 : ta > tb ? 1 : 0;
+      return ta ? -1 : tb ? 1 : 0;
     });
 
     $('#cnt-all').text(toFa(counts.all));
@@ -400,7 +484,7 @@
           <div class="check-btn ${isDone ? 'active' : ''}" onclick="toggleDone('${item.key}')">${isDone ? '✓' : ''}</div>
           <div style="flex-grow:1">
             <span style="font-weight:bold; font-size:0.9rem">${item.t.title} ${item.isPostponed ? '<small style="color:orange; font-size:0.65rem;"> (انتقالی)</small>' : ''}</span>
-            <div style="font-size:0.7rem; color:var(--gray)">${item.t.tags ? '🏷️ ' + item.t.tags + ' | ' : ''} 🔥 ${prioMap[item.t.priority]}</div>
+            <div style="font-size:0.7rem; color:var(--gray)">${item.t.tags ? '🏷️ ' + item.t.tags + ' | ' : ''} 🔥 ${prioMap[item.t.priority]}${metaExtra(item, date)}</div>
           </div>
           <div class="actions">
             <span class="act-icon" onclick="editTask(${item.t.id})">✏️</span>
@@ -426,6 +510,7 @@
     if (visibleItems.length === 0) container.append('<p style="text-align:center; color:#94a3b8; font-size:0.8rem;">لیست خالی است ✨</p>');
     updateCommitmentUI();
     renderWeekAnalysis();
+    scheduleNtfySync(); scheduleSmsSync();
   }
 
   function renderWeekAnalysis() {
@@ -465,11 +550,35 @@
   function saveTask() {
     const title = $('#taskTitle').val().trim();
     if (!title) return alert('عنوان الزامی!');
-    const task = { id: editId || Date.now(), title, tags: $('#taskTags').val(), category: $('#taskCategory').val(), priority: $('#taskPriority').val(), repeat: $('#repeatType').val(), startDate: toEn($('#startDatePicker').val()), days: [] };
-    if (task.repeat === 'weekly') $('.day-chip.active').each(function() { task.days.push($(this).data('value')); });
-    if (editId) tasks = tasks.map(t => t.id === editId ? task : t); else tasks.push(task);
+    const repeat = $('#repeatType').val();
+    const time = $('#taskTime').val() || '';
+    const remind = time ? $('#taskRemind').val() : 'off';
+    const remind2 = time ? $('#taskRemind2').val() : 'off';
+    const startDate = toEn($('#startDatePicker').val());
+    const common = { title, tags: $('#taskTags').val(), category: $('#taskCategory').val(), priority: $('#taskPriority').val(), time, remind, remind2, sms: !!(time && $('#taskSms').prop('checked')), modified: Date.now() };
+
+    if (repeat === 'interval') {
+      if (editId) return alert('دوره‌ی دارویی فقط موقع ثبت جدید ساخته می‌شه. برای تغییر، یک دُز رو جدا ویرایش کن یا دوره رو حذف و دوباره بساز.');
+      if (!time) return alert('برای دوره‌ای، ساعت اولین دُز رو وارد کن.');
+      const n = parseInt($('#intervalHours').val(), 10), d = parseInt($('#durationDays').val(), 10);
+      if (!(n >= 1 && n <= 24) || !(d >= 1 && d <= 60)) return alert('«هر چند ساعت» باید بین ۱ تا ۲۴ و «چند روز» بین ۱ تا ۶۰ باشه.');
+      if (Math.ceil(d * 24 / n) > 300) return alert('تعداد دُزها بیشتر از ۳۰۰ می‌شه؛ بازه رو کوتاه‌تر کن.');
+      const doses = buildDoses(startDate, time, n, d);
+      const courseId = Date.now();
+      doses.forEach((x, i) => tasks.push(Object.assign({}, common, { id: courseId + i, repeat: 'once', startDate: x.date, time: x.time, days: [], courseId, dose: i + 1, doseTotal: doses.length })));
+    } else {
+      const old = editId ? tasks.find(t => t.id === editId) : null;
+      const task = Object.assign({}, old || {}, common, { id: editId || Date.now(), repeat, startDate, days: [] });
+      if (repeat === 'weekly') $('.day-chip.active').each(function() { task.days.push($(this).data('value')); });
+      if (editId) tasks = tasks.map(t => t.id === editId ? task : t); else tasks.push(task);
+    }
     localStorage.setItem('tasks_v24', JSON.stringify(tasks));
-    resetForm(); renderTasks();
+
+    // اجازه‌ی نوتیف رو باید همین‌جا (داخل کلیک کاربر) بخوایم
+    if (time && (remind !== 'off' || remind2 !== 'off') && 'Notification' in window && Notification.permission === 'default') {
+      Promise.resolve(Notification.requestPermission()).then(updateNotifBtn);
+    }
+    resetForm(); renderTasks(); checkReminders();
   }
 
   function editTask(id) {
@@ -478,6 +587,7 @@
     editId = id;
     $('#taskTitle').val(t.title); $('#taskTags').val(t.tags || ''); $('#taskCategory').val(t.category); $('#taskPriority').val(t.priority); $('#repeatType').val(t.repeat);
     $('#startDatePicker').val(toFa(t.startDate)); updateStartDateLabel();
+    $('#taskTime').val(t.time || ''); $('#taskRemind').val(t.time && t.remind !== undefined ? t.remind : '0'); $('#taskRemind2').val(t.time && t.remind2 !== undefined ? t.remind2 : 'off'); $('#taskSms').prop('checked', !!(t.time && t.sms));
     $('.day-chip').removeClass('active');
     if (Array.isArray(t.days)) t.days.forEach(d => $(`.day-chip[data-value="${d}"]`).addClass('active'));
     toggleDays(); $('#form-card').addClass('edit-mode'); $('#saveBtn').text('بروزرسانی'); $('#cancelBtn').show();
@@ -496,16 +606,535 @@
 
   function postponeTask(key) { const date = normalizeDateStr($("#viewDatePicker").val()); postponedState[key] = toEn(new persianDate(date.split('/').map(Number)).add('days', 1).format('YYYY/MM/DD')); localStorage.setItem('tasks_postponed_v24', JSON.stringify(postponedState)); renderTasks(); }
   
-  function deleteTask(id) { if(confirm('آیا از حذف این تسک اطمینان دارید؟')) { tasks = tasks.filter(t => t.id !== id); localStorage.setItem('tasks_v24', JSON.stringify(tasks)); renderTasks(); } }
+  function deleteTask(id) {
+    const t = tasks.find(x => x.id === id);
+    if (!t) return;
+    const removeIds = ids => { tasks = tasks.filter(x => !ids.includes(x.id)); localStorage.setItem('tasks_v24', JSON.stringify(tasks)); renderTasks(); };
+    if (t.courseId && typeof Swal !== 'undefined') {
+      const ids = tasks.filter(x => x.courseId === t.courseId).map(x => x.id);
+      Swal.fire({ title: 'این تسک جزو یک دوره‌ست', text: 'کدوم رو حذف کنم؟', icon: 'question', showDenyButton: true, showCancelButton: true, confirmButtonText: 'فقط همین دُز', denyButtonText: `کل دوره (${toFa(ids.length)} دُز)`, cancelButtonText: 'انصراف' })
+        .then(r => { if (r.isConfirmed) removeIds([id]); else if (r.isDenied) removeIds(ids); });
+      return;
+    }
+    if (confirm('آیا از حذف این تسک اطمینان دارید؟')) removeIds([id]);
+  }
   
-  function toggleDays() { $('#daysGrid').css('display', $('#repeatType').val() === 'weekly' ? 'grid' : 'none'); }
+  function toggleDays() {
+    const r = $('#repeatType').val();
+    $('#daysGrid').css('display', r === 'weekly' ? 'grid' : 'none');
+    $('#intervalBox').css('display', r === 'interval' ? 'block' : 'none');
+    updateIntervalPreview();
+  }
   function updateStartDateLabel() { $('#startDateLabel').text(getDayName($('#startDatePicker').val())); }
   function updateCommitmentUI() {
     const total = perfectDays.length, level = Math.floor(total/7)+1, days = total%7;
     $('#userLevel').text(toFa(level)); $('#commitmentText').text(`${toFa(Math.floor(total/7))} هفته و ${toFa(days)} روز پایبندی`);
     $('#xpBar').css('width', (days/7*100)+'%');
   }
-  function resetForm() { editId = null; $('#taskTitle, #taskTags').val(''); $('.day-chip').removeClass('active'); $('#form-card').removeClass('edit-mode'); $('#saveBtn').text('افزودن به لیست'); $('#cancelBtn').hide(); toggleDays(); }
+  function resetForm() { editId = null; $('#taskTitle, #taskTags, #taskTime').val(''); $('#taskRemind').val('0'); $('#taskRemind2').val('off'); $('#taskSms').prop('checked', false); $('.day-chip').removeClass('active'); $('#form-card').removeClass('edit-mode'); $('#saveBtn').text('افزودن به لیست'); $('#cancelBtn').hide(); toggleDays(); }
+
+  /* =====================================================================
+     تسک‌های یک روز (هم عادی هم انتقالی) — renderTasks و هشدارها از همین استفاده می‌کنن
+     ===================================================================== */
+  function occurrencesFor(date) {
+    const dayName = getDayName(date);
+    const dateVal = parseInt(date.replace(/\//g, ''));
+    const out = [];
+    tasks.forEach(t => {
+      const startVal = parseInt(t.startDate.replace(/\//g, ''));
+      const key = `${date}_${t.id}`;
+      const isNormalVisible = (dateVal >= startVal) && (t.repeat === 'once' ? dateVal === startVal : t.repeat === 'daily' || (t.repeat === 'weekly' && t.days.includes(dayName)));
+      if (isNormalVisible && !postponedState[key]) out.push({ t, key, isPostponed: false });
+      else Object.entries(postponedState).forEach(([pk, pv]) => {
+        if (normalizeDateStr(pv) === date && pk.endsWith(`_${t.id}`)) out.push({ t, key: pk, isPostponed: true });
+      });
+    });
+    return out;
+  }
+
+  const pad2 = n => String(n).padStart(2, '0');
+
+  // زیر عنوان هر تسک: ساعت (قرمز اگه گذشته و انجام نشده) و شماره‌ی دُز
+  function metaExtra(item, viewDate) {
+    const t = item.t;
+    let s = '';
+    if (t.time) {
+      const now = new Date();
+      const todayVal = parseInt(toEn(new persianDate(now).format('YYYY/MM/DD')).replace(/\//g, ''));
+      const viewVal = parseInt(viewDate.replace(/\//g, ''));
+      const nowHM = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+      const late = !completedState[item.key] && (viewVal < todayVal || (viewVal === todayVal && t.time < nowHM));
+      s += ` | ⏰ <span class="${late ? 'overdue' : ''}">${toFa(t.time)}</span>`;
+    }
+    if (t.courseId) s += ` | 💊 دُز ${toFa(t.dose)} از ${toFa(t.doseTotal)}`;
+    return s;
+  }
+
+  /* =====================================================================
+     دوره‌ی دارویی: هر N ساعت به مدت D روز  →  چند تسک مستقل (هر دُز یک تیک)
+     ===================================================================== */
+  function buildDoses(startDate, time, everyHours, days) {
+    const [hh, mm] = time.split(':').map(Number);
+    const startMin = hh * 60 + mm;
+    const count = Math.ceil((days * 24) / everyHours);
+    const base = startDate.split('/').map(Number);
+    const out = [];
+    for (let k = 0; k < count; k++) {
+      const total = startMin + k * everyHours * 60;
+      const dayOffset = Math.floor(total / 1440);
+      const minOfDay = total % 1440;
+      const date = toEn(new persianDate(base).add('days', dayOffset).format('YYYY/MM/DD'));
+      out.push({ date, time: pad2(Math.floor(minOfDay / 60)) + ':' + pad2(minOfDay % 60) });
+    }
+    return out;
+  }
+
+  function updateIntervalPreview() {
+    const el = $('#intervalPreview');
+    if ($('#repeatType').val() !== 'interval') { el.text(''); return; }
+    const time = $('#taskTime').val();
+    const n = parseInt($('#intervalHours').val(), 10), d = parseInt($('#durationDays').val(), 10);
+    if (!time) { el.text('ساعت اولین دُز رو از بخش «⏰ ساعت» بالا وارد کن'); return; }
+    if (!(n >= 1 && n <= 24) || !(d >= 1 && d <= 60)) { el.text('«هر چند ساعت» بین ۱ تا ۲۴ و «چند روز» بین ۱ تا ۶۰ باشه'); return; }
+    if (Math.ceil(d * 24 / n) > 300) { el.text('تعداد دُزها بیشتر از ۳۰۰ می‌شه؛ بازه رو کوتاه‌تر کن'); return; }
+    const doses = buildDoses(toEn($('#startDatePicker').val()), time, n, d);
+    const first = doses[0], last = doses[doses.length - 1];
+    el.html(`${toFa(doses.length)} دُز ساخته می‌شه<br>اولی: ${toFa(first.date)} ساعت ${toFa(first.time)}<br>آخری: ${toFa(last.date)} ساعت ${toFa(last.time)}`);
+  }
+
+  /* =====================================================================
+     هشدارها
+     ===================================================================== */
+  let notified = {};
+  try { notified = JSON.parse(localStorage.getItem('notified_v1')) || {}; } catch (e) { notified = {}; }
+  function saveNotified() { try { localStorage.setItem('notified_v1', JSON.stringify(notified)); } catch (e) {} }
+  function pruneNotified() {
+    const cutoff = Date.now() - 14 * 24 * 3600 * 1000;
+    Object.keys(notified).forEach(k => { if (!notified[k] || notified[k].ts < cutoff) delete notified[k]; });
+    saveNotified();
+  }
+
+  const hmToMin = hm => { const [h, m] = hm.split(':').map(Number); return h * 60 + m; };
+
+  async function getSwReg() {
+    if (!('serviceWorker' in navigator)) return null;
+    try { return await Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(() => r(null), 1500))]); }
+    catch (e) { return null; }
+  }
+
+  async function fireNotification(title, body, tag) {
+    // ۱) پیام داخل خود صفحه (اگه تب جلوی چشمه)
+    try {
+      if (typeof Swal !== 'undefined' && document.visibilityState === 'visible' && !Swal.isVisible()) {
+        Swal.fire({ toast: true, position: 'top', icon: 'info', title: title, text: body, showConfirmButton: false, timer: 12000, timerProgressBar: true });
+      }
+    } catch (e) {}   // خطای پیام داخل صفحه نباید جلوی نوتیف سیستم رو بگیره
+    // ۲) نوتیف سیستم
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    try {
+      const reg = await getSwReg();
+      if (reg && reg.showNotification) { await reg.showNotification(title, { body, tag, requireInteraction: true, dir: 'rtl', lang: 'fa' }); return; }
+    } catch (e) {}
+    try { new Notification(title, { body, tag, dir: 'rtl', lang: 'fa' }); } catch (e) {}
+  }
+
+  // مقدار یادآوری: '0' سر وقت | عدد = دقیقه قبل | 'eve' = شب قبل ساعت ۲۰:۰۰ | 'off' = ندارد
+  // همه‌چیز بر حسب «دقیقه از ابتدای امروز» حساب می‌شه؛ فردا = ۱۴۴۰ به بعد
+  function leadDueAbs(rem, off, timeMin) {
+    if (rem === 'eve') return (off - 1) * 1440 + 20 * 60;
+    return off * 1440 + timeMin - (parseInt(rem, 10) || 0);
+  }
+  function fmtRemaining(min) {
+    if (min < 60) return `${toFa(min)} دقیقه`;
+    const h = Math.floor(min / 60), m = min % 60;
+    return m ? `${toFa(h)} ساعت و ${toFa(m)} دقیقه` : `${toFa(h)} ساعت`;
+  }
+
+  function reminderText(t, dateStr, remainingMin, nextDay) {
+    const title = nextDay ? `⏰ فردا (${getDayName(dateStr)}) ساعت ${toFa(t.time)}: ${t.title}`
+      : remainingMin > 0 ? `⏰ ${fmtRemaining(remainingMin)} دیگه: ${t.title}` : `⏰ ${t.title}`;
+    const body = `ساعت ${toFa(t.time)}` + (t.courseId ? ` · دُز ${toFa(t.dose)} از ${toFa(t.doseTotal)}` : '');
+    return { title, body };
+  }
+
+  function checkReminders(nowArg) {
+    const now = (nowArg instanceof Date) ? nowArg : new Date();
+    const nowAbs = now.getHours() * 60 + now.getMinutes();
+    const midnightMs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    let changed = false;
+    // امروز و فردا (برای «۱ روز قبل» و «شب قبل»)
+    for (let off = 0; off <= 1; off++) {
+      const dateStr = toEn(new persianDate(now).add('days', off).format('YYYY/MM/DD'));
+      occurrencesFor(dateStr).forEach(item => {
+        const t = item.t;
+        if (!t.time || completedState[item.key]) return;
+        const timeMin = hmToMin(t.time);
+        const eventAbs = off * 1440 + timeMin;
+        const createdMs = t.modified || (t.id > 1e12 ? t.id : 0);
+        const due = [];
+        [t.remind, t.remind2].forEach((rem, idx) => {
+          if (rem === undefined || rem === 'off') return;
+          const nk = `${dateStr}#${item.key}#${idx}`;       // برای هر روز و هر یادآوری جدا
+          const sig = t.time + '|' + rem;
+          if (notified[nk] && notified[nk].s === sig) return;
+          const dueAbs = leadDueAbs(rem, off, timeMin);
+          if (nowAbs < dueAbs) return;                       // هنوز وقتش نشده
+          notified[nk] = { s: sig, ts: Date.now() }; changed = true;
+          if (createdMs > midnightMs + dueAbs * 60000) return;        // تسک بعد از موعد این یادآوری ساخته/ویرایش شده
+          if (nowAbs > eventAbs + (rem === '0' ? 180 : 0)) return;    // خودِ قرار گذشته
+          due.push(idx);
+        });
+        if (!due.length) return;                             // اگه چند یادآوری هم‌زمان رسید، فقط یک نوتیف
+        const remaining = eventAbs - nowAbs;
+        // اگه کاربر خواسته فقط ntfy اعلان بده و این هشدار روی ntfy زمان‌بندی شده، Chrome ساکت می‌مونه
+        if (ntfyCfg.enabled && !ntfyCfg.chromeToo && due.every(i => ntfySched[ntfySeq(dateStr, t.id, i)])) return;
+        const { title, body } = reminderText(t, dateStr, remaining, off === 1);
+        fireNotification(title, body, `${dateStr}#${item.key}#${due[due.length - 1]}`);
+      });
+    }
+    if (changed) saveNotified();
+  }
+
+  function updateNotifBtn() {
+    const b = $('#notifBtn');
+    if (!('Notification' in window)) { b.text('🔕 این مرورگر نوتیف پشتیبانی نمی‌کنه'); return; }
+    const p = Notification.permission;
+    b.text(p === 'granted' ? '🔔 هشدار فعاله (برای تست بزن)' : p === 'denied' ? '🔕 هشدار بلاک شده (برای راهنما بزن)' : '🔔 فعال‌سازی هشدار');
+  }
+
+  function onNotifBtn() {
+    if (!('Notification' in window)) return alert('این مرورگر نوتیف پشتیبانی نمی‌کنه. Chrome رو امتحان کن.');
+    if (Notification.permission === 'granted') {
+      fireNotification('🔔 تست هشدار', 'اگه این رو می‌بینی، هشدارها روی این دستگاه کار می‌کنن ✅', 'test');
+    } else if (Notification.permission === 'denied') {
+      const msg = 'نوتیف برای این سایت بلاک شده. روی آیکون قفل کنار آدرس سایت کلیک کن، گزینه‌ی Notifications رو روی Allow بذار و صفحه رو دوباره باز کن.';
+      if (typeof Swal !== 'undefined') Swal.fire({ icon: 'info', title: 'نوتیف بلاک شده', text: msg, confirmButtonText: 'باشه' }); else alert(msg);
+    } else {
+      Promise.resolve(Notification.requestPermission()).then(updateNotifBtn);
+    }
+  }
+
+  function initReminders() {
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(() => {}); }
+    updateNotifBtn();
+    pruneNotified();
+    setTimeout(() => checkReminders(), 1500);
+    setInterval(() => checkReminders(), 15000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkReminders(); scheduleNtfySync(1000); scheduleSmsSync(1500); } });
+    window.addEventListener('focus', () => checkReminders());
+    initNtfyUI();
+    scheduleNtfySync(2500);
+    setInterval(() => scheduleNtfySync(100), 10 * 60 * 1000);
+    initSmsUI();
+    scheduleSmsSync(3500);
+    setInterval(() => scheduleSmsSync(100), 10 * 60 * 1000);
+  }
+
+  /* =====================================================================
+     ntfy: هشدار از طریق سرور (روی گوشی حتی وقتی Chrome بسته‌ست)
+     اپ هشدارهای ۳ روز آینده رو با «X-At» به سرور می‌فرسته؛ سرور سر وقت پیام می‌ده.
+     ===================================================================== */
+  const NTFY_HORIZON_MS = 71 * 3600 * 1000;   // سقف زمان‌بندی ntfy: ۳ روز
+  const readJSON = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } };
+  let ntfyCfg = Object.assign({ enabled: false, server: 'https://ntfy.sh', topic: '', chromeToo: true, noSeq: false }, readJSON('ntfy_cfg_v1', {}));
+  let ntfySched = readJSON('ntfy_sched_v1', {});   // شناسه‌ی هشدار → { sig, due }
+  let ntfyBusy = false, ntfyAgain = false, ntfyTimer = null;
+  const saveNtfyState = () => { try { localStorage.setItem('ntfy_cfg_v1', JSON.stringify(ntfyCfg)); localStorage.setItem('ntfy_sched_v1', JSON.stringify(ntfySched)); } catch (e) {} };
+  const ntfySeq = (dateStr, id, idx) => `sp-${dateStr.replace(/\//g, '')}-${id}-${idx}`;
+
+  function randomTopic() {
+    const a = new Uint8Array(9);
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a); else a.forEach((_, i) => { a[i] = Math.floor(Math.random() * 256); });
+    return 'sp-' + Array.from(a, b => b.toString(36).padStart(2, '0')).join('').slice(0, 14);
+  }
+  function ntfyStatus(msg, bad) { $('#ntfyStatus').text(msg).css('color', bad ? 'var(--danger)' : 'var(--gray)'); }
+
+  function initNtfyUI() {
+    if (!ntfyCfg.topic) { ntfyCfg.topic = randomTopic(); saveNtfyState(); }
+    $('#ntfyServer').val(ntfyCfg.server); $('#ntfyTopic').val(ntfyCfg.topic);
+    $('#ntfyEnabled').prop('checked', !!ntfyCfg.enabled); $('#ntfyChromeToo').prop('checked', ntfyCfg.chromeToo !== false);
+  }
+
+  function saveNtfyCfg() {
+    const was = { enabled: ntfyCfg.enabled, server: ntfyCfg.server, topic: ntfyCfg.topic };
+    let server = ($('#ntfyServer').val() || '').trim().replace(/\/+$/, '');
+    if (!/^https?:\/\/[^\s/]+/.test(server)) { server = 'https://ntfy.sh'; $('#ntfyServer').val(server); }
+    ntfyCfg.server = server;
+    ntfyCfg.topic = ($('#ntfyTopic').val() || '').trim().replace(/[^A-Za-z0-9_-]/g, '');
+    $('#ntfyTopic').val(ntfyCfg.topic);
+    ntfyCfg.enabled = $('#ntfyEnabled').prop('checked') && !!ntfyCfg.topic;
+    ntfyCfg.chromeToo = $('#ntfyChromeToo').prop('checked');
+    const moved = was.server !== ntfyCfg.server || was.topic !== ntfyCfg.topic;
+    if (was.enabled && (!ntfyCfg.enabled || moved)) ntfyCancelAll(was.server, was.topic);   // هشدارهای زمان‌بندی‌شده‌ی قبلی رو لغو کن
+    saveNtfyState();
+    if (ntfyCfg.enabled) scheduleNtfySync(300); else if (was.enabled) ntfyStatus('ارسال به ntfy خاموش شد.');
+  }
+
+  // هدرهای HTTP باید ASCII باشن؛ متن فارسی به‌صورت RFC 2047 فرستاده می‌شه
+  function mime2047(s) {
+    if (!/[^\x20-\x7e]/.test(s)) return s;
+    const bin = encodeURIComponent(s).replace(/%([0-9A-F]{2})/g, (m, h) => String.fromCharCode(parseInt(h, 16)));
+    return '=?UTF-8?B?' + btoa(bin) + '?=';
+  }
+
+  async function ntfyPublish(o) {
+    const base = `${ntfyCfg.server}/${ntfyCfg.topic}`;
+    const headers = { 'Title': mime2047(o.title), 'Priority': o.priority || 'high', 'Tags': o.tags || 'alarm_clock' };
+    if (/^https?:/.test(location.href)) headers['Click'] = location.href.split('#')[0].split('?')[0];
+    if (o.atMs) headers['X-At'] = String(Math.round(o.atMs / 1000));
+    const useSeq = o.seq && !ntfyCfg.noSeq;
+    let res = await fetch(useSeq ? `${base}/${o.seq}` : base, { method: 'POST', body: o.message, headers });
+    if (!res.ok && useSeq && [400, 404, 405].includes(res.status)) {      // این سرور شناسه‌ی پیام (برای ویرایش/لغو) رو نمی‌شناسه
+      ntfyCfg.noSeq = true; saveNtfyState();
+      res = await fetch(base, { method: 'POST', body: o.message, headers });
+    }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+  }
+
+  async function ntfyDelete(seq, server, topic) {
+    if (ntfyCfg.noSeq) return;
+    try { await fetch(`${server || ntfyCfg.server}/${topic || ntfyCfg.topic}/${seq}`, { method: 'DELETE' }); } catch (e) {}
+  }
+
+  async function ntfyCancelAll(server, topic) {
+    const now = Date.now();
+    const pending = Object.keys(ntfySched).filter(k => ntfySched[k].due > now);
+    ntfySched = {};
+    saveNtfyState();
+    for (const seq of pending) await ntfyDelete(seq, server, topic);
+  }
+
+  function scheduleNtfySync(delay) {
+    if (!ntfyCfg.enabled) return;
+    clearTimeout(ntfyTimer);
+    ntfyTimer = setTimeout(() => syncNtfy(), delay || 800);
+  }
+
+  async function syncNtfy() {
+    if (!ntfyCfg.enabled || !ntfyCfg.topic) return;
+    if (ntfyBusy) { ntfyAgain = true; return; }
+    ntfyBusy = true;
+    try {
+      const now = new Date(), nowMs = now.getTime();
+      const wanted = {};
+      for (let off = 0; off <= 4; off++) {
+        const dateStr = toEn(new persianDate(now).add('days', off).format('YYYY/MM/DD'));
+        const dayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate() + off).getTime();
+        occurrencesFor(dateStr).forEach(item => {
+          const t = item.t;
+          if (!t.time || completedState[item.key]) return;
+          const timeMin = hmToMin(t.time);
+          const createdMs = t.modified || (t.id > 1e12 ? t.id : 0);
+          [t.remind, t.remind2].forEach((rem, idx) => {
+            if (rem === undefined || rem === 'off') return;
+            const dueMs = dayMs + leadDueAbs(rem, 0, timeMin) * 60000;
+            if (dueMs <= nowMs + 10000 || dueMs > nowMs + NTFY_HORIZON_MS) return;   // رسیده/گذشته → خود Chrome؛ خیلی دور → بعداً
+            if (createdMs > dueMs) return;
+            const eventMs = dayMs + timeMin * 60000;
+            const nextDay = new Date(eventMs).toDateString() !== new Date(dueMs).toDateString();
+            const txt = reminderText(t, dateStr, Math.round((eventMs - dueMs) / 60000), nextDay);
+            wanted[ntfySeq(dateStr, t.id, idx)] = { sig: [t.time, rem, t.title, dueMs].join('|'), dueMs, title: txt.title, body: txt.body };
+          });
+        });
+      }
+      for (const seq of Object.keys(wanted)) {
+        const w = wanted[seq];
+        if (ntfySched[seq] && ntfySched[seq].sig === w.sig) continue;
+        await ntfyPublish({ seq, title: w.title, message: w.body, atMs: w.dueMs });
+        ntfySched[seq] = { sig: w.sig, due: w.dueMs };
+        saveNtfyState();
+      }
+      for (const seq of Object.keys(ntfySched)) {                      // تیک‌خورده/حذف‌شده/ویرایش‌شده → لغو
+        if (wanted[seq]) continue;
+        const d = ntfySched[seq].due;
+        if (d > nowMs) { await ntfyDelete(seq); delete ntfySched[seq]; }
+        else if (d < nowMs - 6 * 3600 * 1000) delete ntfySched[seq];
+      }
+      saveNtfyState();
+      const pend = Object.keys(ntfySched).filter(k => ntfySched[k].due > nowMs).length;
+      ntfyStatus(`✅ ساعت ${toFa(pad2(now.getHours()) + ':' + pad2(now.getMinutes()))} همگام شد · ${toFa(pend)} هشدار برای ۳ روز آینده روی ntfy هست` + (ntfyCfg.noSeq ? ' · ⚠️ این سرور ویرایش/حذف هشدار زمان‌بندی‌شده رو پشتیبانی نمی‌کنه، پس هشدار تسک حذف‌شده ممکنه باز هم بیاد' : ''));
+    } catch (e) {
+      saveNtfyState();
+      const net = /fetch|network|load failed/i.test(String(e.message));
+      ntfyStatus('⚠️ ارسال به ntfy نشد: ' + (net ? 'اتصال به سرور برقرار نشد (VPN روشنه؟)' : e.message) + '. بعداً خودکار دوباره تلاش می‌کنم.', true);
+    } finally {
+      ntfyBusy = false;
+      if (ntfyAgain) { ntfyAgain = false; scheduleNtfySync(500); }
+    }
+  }
+
+  async function ntfyTest() {
+    saveNtfyCfg();
+    if (!ntfyCfg.topic) return ntfyStatus('اسم کانال خالیه.', true);
+    ntfyStatus('در حال ارسال...');
+    try {
+      await ntfyPublish({ title: '✅ اتصال ntfy برقراره', message: 'هشدارهای Smart-Planner از این‌جا میان.', tags: 'white_check_mark', priority: 'default' });
+      await ntfyPublish({ seq: 'sp-test', title: '⏰ تست زمان‌بندی', message: 'این پیام باید حدود ۱ دقیقه بعد از زدن دکمه برسه.', atMs: Date.now() + 65000 });
+      ntfyStatus('✅ دو پیام فرستاده شد: یکی همین الان و یکی حدود ۱ دقیقه دیگه. اگه روی گوشی نیومد: اسم کانال توی اپ ntfy، VPN و اجازه‌ی نوتیف اپ رو چک کن.');
+      if (ntfyCfg.enabled) scheduleNtfySync(300);
+    } catch (e) {
+      const net = /fetch|network|load failed/i.test(String(e.message));
+      ntfyStatus('⚠️ ' + (net ? 'اتصال به سرور برقرار نشد (VPN روشنه؟)' : e.message), true);
+    }
+  }
+
+  /* =====================================================================
+     پیامک (کاوه‌نگار): فقط برای تسک‌هایی که تیک «پیامک هم بفرست» دارن.
+     پیامک سمت سرور کاوه‌نگار با پارامتر date زمان‌بندی می‌شه؛ پس Chrome بسته هم باشه می‌رسه.
+     برای هر تسک فقط یک پیامک (زودترین یادآوری) فرستاده می‌شه تا هزینه کم بمونه.
+     ===================================================================== */
+  const SMS_HORIZON_MS = 71 * 3600 * 1000;
+  let smsCfg = Object.assign({ enabled: false, key: '', receptor: '', sender: '' }, readJSON('sms_cfg_v1', {}));
+  let smsSched = readJSON('sms_sched_v1', {});   // شناسه → { sig, due, mid }
+  let smsBusy = false, smsAgain = false, smsTimer = null;
+  const saveSmsState = () => { try { localStorage.setItem('sms_cfg_v1', JSON.stringify(smsCfg)); localStorage.setItem('sms_sched_v1', JSON.stringify(smsSched)); } catch (e) {} };
+  const smsKey = (dateStr, id) => `sp-${dateStr.replace(/\//g, '')}-${id}`;
+  function smsStatus(msg, bad) { $('#smsStatus').text(msg).css('color', bad ? 'var(--danger)' : 'var(--gray)'); }
+
+  function normPhone(s) {
+    const d = toEn(String(s || '')).replace(/[\s\-()]/g, '');
+    const m = d.match(/^(?:\+98|0098|98|0)?(9\d{9})$/);
+    return m ? '0' + m[1] : '';
+  }
+
+  function initSmsUI() {
+    $('#smsKey').val(smsCfg.key); $('#smsPhone').val(smsCfg.receptor); $('#smsSender').val(smsCfg.sender);
+    $('#smsEnabled').prop('checked', !!smsCfg.enabled);
+    updateSmsHint();
+  }
+  function updateSmsHint() {
+    const ok = smsCfg.enabled && smsCfg.key && smsCfg.receptor;
+    $('#smsHint').text(ok ? '' : 'پیامک هنوز در تنظیمات (بالای صفحه) فعال نشده؛ تیک بخوره هم تا اون موقع پیامکی نمی‌ره.');
+  }
+
+  function saveSmsCfg() {
+    const was = { enabled: smsCfg.enabled, key: smsCfg.key };
+    smsCfg.key = ($('#smsKey').val() || '').trim();
+    const ph = normPhone($('#smsPhone').val());
+    if ($('#smsPhone').val().trim() && !ph) smsStatus('شماره‌ی موبایل درست نیست (مثل 09123456789).', true);
+    smsCfg.receptor = ph || ($('#smsPhone').val().trim() ? '' : '');
+    if (ph) $('#smsPhone').val(ph);
+    smsCfg.sender = ($('#smsSender').val() || '').trim();
+    smsCfg.enabled = $('#smsEnabled').prop('checked') && !!smsCfg.key && !!smsCfg.receptor;
+    if ($('#smsEnabled').prop('checked') && !smsCfg.enabled) smsStatus('برای فعال شدن، کلید API و شماره‌ی درست لازمه.', true);
+    if (was.enabled && (!smsCfg.enabled || was.key !== smsCfg.key)) smsCancelAll(was.key);
+    saveSmsState(); updateSmsHint();
+    if (smsCfg.enabled) scheduleSmsSync(300); else if (was.enabled) smsStatus('ارسال پیامک خاموش شد و پیامک‌های زمان‌بندی‌شده لغو شدن.');
+  }
+
+  const SMS_ERR = { 417: 'تاریخ ارسال نامعتبره', 418: 'اعتبار کاوه‌نگار کافی نیست', 411: 'شماره‌ی گیرنده نامعتبره', 412: 'خط ارسال‌کننده نامعتبره (فیلد خط رو خالی بذار)', 413: 'طول پیامک نامعتبره' };
+
+  async function smsCall(key, method, params) {
+    const body = new URLSearchParams();
+    Object.keys(params).forEach(k => { if (params[k] !== undefined && params[k] !== '') body.append(k, params[k]); });
+    const res = await fetch(`https://api.kavenegar.com/v1/${encodeURIComponent(key)}/sms/${method}.json`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+    let j = null;
+    try { j = await res.json(); } catch (e) {}
+    const st = j && j.return ? j.return.status : res.status;
+    if (st !== 200) {
+      const e = new Error(SMS_ERR[st] || (j && j.return && j.return.message) || ('HTTP ' + res.status));
+      e.status = st; throw e;
+    }
+    return Array.isArray(j.entries) ? j.entries : (j.entries ? [j.entries] : []);
+  }
+
+  async function smsCancelIds(key, mids) {
+    if (!mids.length) return;
+    try { await smsCall(key, 'cancel', { messageid: mids.join(',') }); } catch (e) {}
+  }
+  async function smsCancelAll(key) {
+    const now = Date.now();
+    const mids = Object.keys(smsSched).filter(k => smsSched[k].due > now && smsSched[k].mid).map(k => smsSched[k].mid);
+    smsSched = {}; saveSmsState();
+    await smsCancelIds(key || smsCfg.key, mids);
+  }
+
+  function scheduleSmsSync(delay) {
+    if (!smsCfg.enabled) return;
+    clearTimeout(smsTimer);
+    smsTimer = setTimeout(() => syncSms(), delay || 800);
+  }
+
+  function smsText(t, dateStr, leadMin, nextDay) {
+    const x = reminderText(t, dateStr, leadMin, nextDay);
+    const s = x.title + '\n' + x.body;
+    return s.length > 70 ? s.slice(0, 69) + '…' : s;
+  }
+
+  async function syncSms() {
+    if (!smsCfg.enabled || !smsCfg.key || !smsCfg.receptor) return;
+    if (smsBusy) { smsAgain = true; return; }
+    smsBusy = true;
+    try {
+      const now = new Date(), nowMs = now.getTime();
+      const wanted = {};
+      for (let off = 0; off <= 4; off++) {
+        const dateStr = toEn(new persianDate(now).add('days', off).format('YYYY/MM/DD'));
+        const dayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate() + off).getTime();
+        occurrencesFor(dateStr).forEach(item => {
+          const t = item.t;
+          if (!t.sms || !t.time || completedState[item.key]) return;
+          const timeMin = hmToMin(t.time);
+          const createdMs = t.modified || (t.id > 1e12 ? t.id : 0);
+          let best = null;
+          [t.remind, t.remind2].forEach(rem => {
+            if (rem === undefined || rem === 'off') return;
+            const dueMs = dayMs + leadDueAbs(rem, 0, timeMin) * 60000;
+            if (dueMs <= nowMs + 90000 || dueMs > nowMs + SMS_HORIZON_MS || createdMs > dueMs) return;
+            if (!best || dueMs < best.dueMs) best = { rem, dueMs };
+          });
+          if (!best) return;
+          const eventMs = dayMs + timeMin * 60000;
+          const nextDay = new Date(eventMs).toDateString() !== new Date(best.dueMs).toDateString();
+          const text = smsText(t, dateStr, Math.round((eventMs - best.dueMs) / 60000), nextDay);
+          wanted[smsKey(dateStr, t.id)] = { sig: [t.time, best.rem, t.title, best.dueMs, smsCfg.receptor].join('|'), dueMs: best.dueMs, text };
+        });
+      }
+      // اول لغوهای لازم (ویرایش‌شده/تیک‌خورده/حذف‌شده)، بعد ارسال‌های جدید
+      const toCancel = [];
+      Object.keys(smsSched).forEach(k => {
+        const s = smsSched[k];
+        const w = wanted[k];
+        if (w && w.sig === s.sig) return;
+        if (s.due > nowMs && s.mid) toCancel.push(s.mid);
+        if (s.due > nowMs || s.due < nowMs - 6 * 3600 * 1000 || w) delete smsSched[k];
+      });
+      saveSmsState();
+      await smsCancelIds(smsCfg.key, toCancel);
+      for (const k of Object.keys(wanted)) {
+        if (smsSched[k]) continue;
+        const w = wanted[k];
+        const ent = await smsCall(smsCfg.key, 'send', { receptor: smsCfg.receptor, message: w.text, sender: smsCfg.sender, date: Math.round(w.dueMs / 1000) });
+        smsSched[k] = { sig: w.sig, due: w.dueMs, mid: ent[0] && ent[0].messageid ? String(ent[0].messageid) : '' };
+        saveSmsState();
+      }
+      const pend = Object.keys(smsSched).filter(k => smsSched[k].due > nowMs).length;
+      smsStatus(`✅ ساعت ${toFa(pad2(now.getHours()) + ':' + pad2(now.getMinutes()))} همگام شد · ${toFa(pend)} پیامک برای ۳ روز آینده زمان‌بندی شده`);
+    } catch (e) {
+      saveSmsState();
+      const net = /fetch|network|load failed/i.test(String(e.message));
+      smsStatus('⚠️ پیامک زمان‌بندی نشد: ' + (net ? 'اتصال به api.kavenegar.com برقرار نشد' : e.message) + '. بعداً خودکار دوباره تلاش می‌کنم.', true);
+    } finally {
+      smsBusy = false;
+      if (smsAgain) { smsAgain = false; scheduleSmsSync(500); }
+    }
+  }
+
+  async function smsTest() {
+    $('#smsEnabled').prop('checked', $('#smsEnabled').prop('checked'));
+    saveSmsCfg();
+    if (!smsCfg.key || !smsCfg.receptor) return smsStatus('کلید API و شماره‌ی موبایل رو وارد کن.', true);
+    smsStatus('در حال ارسال...');
+    try {
+      await smsCall(smsCfg.key, 'send', { receptor: smsCfg.receptor, message: 'تست Smart-Planner: پیامک هشدار وصل شد.', sender: smsCfg.sender });
+      smsStatus('✅ یک پیامک تست فرستاده شد (یک پیامک از اعتبارت کم می‌شه). اگه تا چند دقیقه نیومد، خط ارسال‌کننده رو چک کن.');
+      if (smsCfg.enabled) scheduleSmsSync(300);
+    } catch (e) {
+      const net = /fetch|network|load failed/i.test(String(e.message));
+      smsStatus('⚠️ ' + (net ? 'اتصال به api.kavenegar.com برقرار نشد' : e.message), true);
+    }
+  }
+
 </script>
  <script>
     window.addEventListener('load', () => {
