@@ -4,6 +4,9 @@
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 
+// لازمِ نصب‌شدن به‌عنوان اپ در بعضی نسخه‌های کروم؛ کاری نمی‌کنه و همه‌چیز از شبکه می‌آد
+self.addEventListener('fetch', () => {});
+
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(

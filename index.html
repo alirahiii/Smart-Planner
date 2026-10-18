@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6366f1">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
   <title>برنامه‌ریزی شخصی طراحی شده علی رحمانی </title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
@@ -744,9 +748,11 @@
   const fmtDayLong = d => getDayName(d) + ' ' + toEn(new persianDate(d.split('/').map(Number)).format('D MMMM')).replace(/\d+/g, x => toFa(x));
   const validDate = d => { if (!/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(d)) return null; const [y, m, dd] = d.split('/').map(Number); if (m < 1 || m > 12 || dd < 1 || dd > (m <= 6 ? 31 : m <= 11 ? 30 : 29)) return null; return `${y}/${pad2(m)}/${pad2(dd)}`; };
 
-  function applyMove(key, date, time) {
+  const REM_OPTS = [['0', 'سر وقت'], ['5', '۵ دقیقه قبل'], ['10', '۱۰ دقیقه قبل'], ['30', '۳۰ دقیقه قبل'], ['60', '۱ ساعت قبل'], ['120', '۲ ساعت قبل'], ['1440', '۱ روز قبل'], ['eve', 'شب قبل (ساعت ۲۰:۰۰)']];
+  const remSel = (id, cur, withOff) => `<select id="${id}">${(withOff ? [['off', 'ندارم']] : []).concat(REM_OPTS, withOff ? [] : [['off', 'بدون هشدار']]).map(([v, l]) => `<option value="${v}"${String(cur) === v ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
+  function applyMove(key, date, time, al) {
     postponedState[key] = date;
-    postponedMeta[key] = { time: time, at: Date.now() };
+    postponedMeta[key] = Object.assign({ time: time, at: Date.now() }, time && al ? al : {});
     saveMoves();
     renderTasks();
   }
@@ -784,13 +790,23 @@
         <button type="button" data-t="16:00">${toFa('16:00')}</button><button type="button" data-t="20:00">${toFa('20:00')}</button>
         <button type="button" data-plus="1">۱ ساعت دیگه</button><button type="button" data-t="">بدون ساعت</button>
       </div>
+      <div id="ppAlerts">
+        <h4>🔔 یادآوری</h4>
+        ${remSel('ppRem1', t.time && t.remind !== undefined ? t.remind : '0', false)}
+        <div style="height:8px"></div>
+        <div class="mini-label" style="margin-top:2px">یادآوری دوم (اختیاری)</div>
+        ${remSel('ppRem2', t.time && t.remind2 !== undefined ? t.remind2 : 'off', true)}
+        <label class="switch-row"><input type="checkbox" id="ppSms"${t.time && t.sms ? ' checked' : ''}><span>📩 پیامک هم بفرست <small>(هزینه دارد)</small></span></label>
+        ${smsReady() ? '' : '<div class="notif-note" style="text-align:right;margin:0">پیامک هنوز توی تنظیمات هشدارها فعال نشده.</div>'}
+      </div>
       <div class="pp-prev" id="ppPrev"></div></div>`;
 
     const refresh = () => {
       $('.pp-day').each((i, e) => $(e).toggleClass('sel', $(e).data('d') === sel.date));
+      $('#ppAlerts').toggle(!!sel.time);
       const custom = validDate(toEn($('#ppDate').val() || ''));
       $('#ppPrev').html(`➡️ ${esc(fmtDayLong(sel.date))}` + (sel.time ? ` · ساعت ${toFa(sel.time)}` : ' · بدون ساعت') +
-        `<small>${sel.time ? (t.time ? 'یادآوری‌ها (و پیامک اگه روشن باشه) با زمان جدید دوباره تنظیم می‌شن' : 'یک یادآوری سر وقت براش ثبت می‌شه') : (t.time ? 'یادآوری‌های این تسک برای روز جدید لغو می‌شن' : '')}</small>`);
+        `<small>${sel.time ? 'یادآوری و پیامک طبق انتخاب بالا برای همین روز تنظیم می‌شن' : (t.time ? 'یادآوری‌های این تسک برای روز جدید لغو می‌شن' : '')}</small>`);
       return custom;
     };
 
@@ -811,12 +827,13 @@
       },
       preConfirm: () => {
         const typed = ($('#ppDate').val() || '').trim();
+        sel.rem1 = $('#ppRem1').val(); sel.rem2 = $('#ppRem2').val(); sel.sms = $('#ppSms').prop('checked');
         if (typed) { const v = validDate(toEn(typed)); if (!v) { Swal.showValidationMessage('تاریخ رو این شکلی بنویس: ' + toFa('1405/08/20')); return false; } sel.date = v; }
         return true;
       }
     }).then(r => {
       if (r.isConfirmed) {
-        applyMove(key, sel.date, sel.time);
+        applyMove(key, sel.date, sel.time, sel.time ? { remind: sel.rem1, remind2: sel.rem2, sms: sel.sms } : null);
         try { Swal.fire({ toast: true, position: 'top', showConfirmButton: false, timer: 2600, title: '➡️ منتقل شد به ' + fmtDayLong(sel.date) + (sel.time ? ' ساعت ' + toFa(sel.time) : '') }); } catch (e) {}
       } else if (r.isDenied) { unmove(key); }
     });
@@ -888,6 +905,7 @@
       if (m.time && !t.time) { c.remind = '0'; c.remind2 = 'off'; c.sms = false; }
       c.time = m.time;
     }
+    if (m.remind !== undefined && c.time) { c.remind = m.remind; c.remind2 = m.remind2; c.sms = !!m.sms; }
     c.modified = Math.max(t.modified || 0, m.at || 0);
     return c;
   }
