@@ -180,7 +180,7 @@
       <label style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; font-weight: 700;"><input type="checkbox" id="smsEnabled" style="width: auto; margin: 0;" onchange="saveSmsCfg()"> ارسال پیامک برای تسک‌های تیک‌دار فعال باشه</label>
       <button class="btn" style="height: 38px; font-size: 0.85rem;" onclick="smsTest()">ارسال پیامک تست</button>
       <p id="smsStatus" class="notif-note" style="margin: 10px 0 0;"></p>
-      <p class="notif-note" style="margin: 6px 0 0; text-align: right;">⚠️ لغو پیامکِ زمان‌بندی‌شده از مرورگر ممکن نیست: اگه تسک رو ویرایش یا حذف کنی، پیامک قبلی هنوز می‌ره. پیامک زمان‌بندی‌شده شاید فقط بین ۷ صبح تا ۱۰ شب مجاز باشه؛ اگه رد شد، اپ دلیلش رو همین‌جا می‌نویسه.</p>
+      <p class="notif-note" style="margin: 6px 0 0; text-align: right;">اگه تسک رو ویرایش، حذف یا تیکش رو بردار، پیامک زمان‌بندی‌شده خودکار لغو می‌شه (به شرط اینکه اون لحظه اینترنت وصل باشه؛ وگرنه دفعه‌ی بعد که اپ رو باز کنی). پیامک زمان‌بندی‌شده شاید فقط بین ۷ صبح تا ۱۰ شب مجاز باشه؛ اگه رد شد، اپ دلیلش رو همین‌جا می‌نویسه.</p>
     </div>
   </details>
     </div>
@@ -1040,15 +1040,16 @@
   /* =====================================================================
      پیامک (کنسول ملی‌پیامک): فقط برای تسک‌هایی که تیک «پیامک هم بفرست» دارن.
      پیامک سمت سرور ملی‌پیامک زمان‌بندی می‌شه؛ پس Chrome بسته هم باشه می‌رسه.
-     برای هر تسک فقط یک پیامک (زودترین یادآوری). لغو از مرورگر ممکن نیست؛
-     پس ویرایش/حذف تسک، پیامکِ قبلاً زمان‌بندی‌شده رو لغو نمی‌کنه.
+     برای هر تسک فقط یک پیامک (زودترین یادآوری). اگه تسک ویرایش/حذف/تیک‌برداشته بشه،
+     پیامک زمان‌بندی‌شده با PUT و شناسه‌ی (id) لغو می‌شه؛ اگه لغو نشد، دفعه‌ی بعد دوباره تلاش می‌شه.
      ===================================================================== */
-  let SMS_HORIZON_MS = 30 * 3600 * 1000;
+  let SMS_HORIZON_MS = 71 * 3600 * 1000;
   let smsCfg = Object.assign({ enabled: false, key: '', receptor: '', sender: '' }, readJSON('sms_cfg_v1', {}));
   let smsSched = readJSON('sms_sched_v1', {});   // شناسه → { sig, due }
   let smsFailed = {};                            // شناسه → sig (فقط تا بستن صفحه، برای اینکه هر ۱۰ دقیقه دوباره نکوبه)
+  let smsCancelQ = readJSON('sms_cancel_v1', []); // شناسه‌ی پیامک‌هایی که باید لغو بشن: [{ id, due }]
   let smsBusy = false, smsAgain = false, smsTimer = null;
-  const saveSmsState = () => { try { localStorage.setItem('sms_cfg_v1', JSON.stringify(smsCfg)); localStorage.setItem('sms_sched_v1', JSON.stringify(smsSched)); } catch (e) {} };
+  const saveSmsState = () => { try { localStorage.setItem('sms_cfg_v1', JSON.stringify(smsCfg)); localStorage.setItem('sms_sched_v1', JSON.stringify(smsSched)); localStorage.setItem('sms_cancel_v1', JSON.stringify(smsCancelQ)); } catch (e) {} };
   const smsKey = (dateStr, id) => `sp-${dateStr.replace(/\//g, '')}-${id}`;
   function smsStatus(msg, bad) { $('#smsStatus').text(msg).css('color', bad ? 'var(--danger)' : 'var(--gray)'); }
   const smsReady = () => !!(smsCfg.enabled && smsCfg.key && smsCfg.receptor && smsCfg.sender);
@@ -1060,7 +1061,7 @@
   }
   function localIso(ms) {
     const d = new Date(ms);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:00`;
+    return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;   // مثل مثال مستندات: 1/20/2023 15:22
   }
 
   function initSmsUI() {
@@ -1073,7 +1074,25 @@
     if (typeof updateAlertChips === 'function') updateAlertChips();
   }
 
+  function queueCancelAll() {
+    const now = Date.now();
+    Object.keys(smsSched).forEach(k => { if (smsSched[k].due > now && smsSched[k].mid) smsCancelQ.push({ id: smsSched[k].mid, due: smsSched[k].due }); });
+    smsSched = {};
+  }
+  async function flushSmsCancels(key) {
+    key = key || smsCfg.key;
+    if (!key || !smsCancelQ.length) return;
+    const now = Date.now(), left = [];
+    for (const c of smsCancelQ) {
+      if (c.due < now) continue;                       // وقتش گذشته؛ دیگه لازم نیست
+      try { await smsCall('PUT', 'send/schedule', { id: Number(c.id) }, key); }
+      catch (e) { if (!/fetch|network|load failed/i.test(String(e.message)) && !(e.status >= 500)) continue; left.push(c); }   // خطای دائمی (مثلاً «قبلاً ارسال شده») رو رها کن؛ خطای شبکه رو بعداً دوباره
+    }
+    smsCancelQ = left; saveSmsState();
+  }
+
   function saveSmsCfg() {
+    const wasEnabled = smsCfg.enabled, oldKey = smsCfg.key;
     smsCfg.key = ($('#smsKey').val() || '').trim();
     const rawPhone = ($('#smsPhone').val() || '').trim();
     const ph = normPhone(rawPhone);
@@ -1083,19 +1102,20 @@
     smsCfg.sender = toEn(($('#smsSender').val() || '').trim());
     smsCfg.enabled = $('#smsEnabled').prop('checked') && !!smsCfg.key && !!smsCfg.receptor && !!smsCfg.sender;
     if ($('#smsEnabled').prop('checked') && !smsCfg.enabled) smsStatus('برای فعال شدن، کلید و شماره‌ی موبایل و شماره‌ی خط ارسال‌کننده لازمه.', true);
+    if (wasEnabled && !smsCfg.enabled) queueCancelAll();
     saveSmsState(); updateSmsHint();
-    if (smsCfg.enabled) scheduleSmsSync(300);
+    if (smsCfg.enabled) scheduleSmsSync(300); else if (wasEnabled) flushSmsCancels(oldKey);
   }
 
-  async function smsCall(path, payload) {
-    const res = await fetch(`https://console.melipayamak.com/api/${path}/${encodeURIComponent(smsCfg.key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  async function smsCall(method, path, payload, keyOverride) {
+    const res = await fetch(`https://console.melipayamak.com/api/${path}/${encodeURIComponent(keyOverride || smsCfg.key)}`, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     let txt = ''; try { txt = await res.text(); } catch (e) {}
     let j = null; try { j = JSON.parse(txt); } catch (e) {}
     if (!res.ok) {
       const m = (j && (typeof j.status === 'string' ? j.status : j.message || j.title)) || ('HTTP ' + res.status);
       const e = new Error(String(m)); e.status = res.status; throw e;
     }
-    return j;
+    return j || {};
   }
 
   function scheduleSmsSync(delay) {
@@ -1138,15 +1158,23 @@
           wanted[smsKey(dateStr, t.id)] = { sig: [t.time, best.rem, t.title, best.dueMs, smsCfg.receptor].join('|'), dueMs: best.dueMs, text: smsText(t, dateStr, Math.round((eventMs - best.dueMs) / 60000), nextDay) };
         });
       }
-      Object.keys(smsSched).forEach(k => { if (smsSched[k].due < nowMs - 6 * 3600 * 1000) delete smsSched[k]; });
+      // تسک ویرایش‌شده/تیک‌برداشته/انجام‌شده/حذف‌شده → پیامک قبلی لغو بشه
+      Object.keys(smsSched).forEach(k => {
+        const s0 = smsSched[k], w0 = wanted[k];
+        if (w0 && w0.sig === s0.sig) return;
+        if (s0.due > nowMs && s0.mid) smsCancelQ.push({ id: s0.mid, due: s0.due });
+        if (s0.due > nowMs || s0.due < nowMs - 6 * 3600 * 1000 || w0) delete smsSched[k];
+      });
+      saveSmsState();
+      await flushSmsCancels();
       let failed = 0, firstErr = '';
       for (const k of Object.keys(wanted)) {
         const w = wanted[k];
         if (smsSched[k] && smsSched[k].sig === w.sig) continue;
         if (smsFailed[k] === w.sig) { failed++; continue; }
         try {
-          await smsCall('send/schedule', { from: smsCfg.sender, to: smsCfg.receptor, message: w.text, date: localIso(w.dueMs) });
-          smsSched[k] = { sig: w.sig, due: w.dueMs };
+          const r = await smsCall('POST', 'send/schedule', { from: smsCfg.sender, to: smsCfg.receptor, message: w.text, date: localIso(w.dueMs) });
+          smsSched[k] = { sig: w.sig, due: w.dueMs, mid: r && r.id != null ? String(r.id) : '' };
           saveSmsState();
         } catch (e) {
           if (/fetch|network|load failed/i.test(String(e.message))) throw e;
@@ -1155,7 +1183,7 @@
       }
       saveSmsState();
       const pend = Object.keys(smsSched).filter(k => smsSched[k].due > nowMs).length;
-      const base = `ساعت ${toFa(pad2(now.getHours()) + ':' + pad2(now.getMinutes()))} · ${toFa(pend)} پیامک برای ۳۰ ساعت آینده زمان‌بندی شده`;
+      const base = `ساعت ${toFa(pad2(now.getHours()) + ':' + pad2(now.getMinutes()))} · ${toFa(pend)} پیامک برای ۳ روز آینده زمان‌بندی شده`;
       if (failed) smsStatus(`⚠️ ${base} · ${toFa(failed)} مورد رد شد: ${firstErr || 'قبلاً رد شده'}`, true);
       else smsStatus('✅ ' + base);
     } catch (e) {
@@ -1173,7 +1201,7 @@
     if (!smsCfg.key || !smsCfg.receptor || !smsCfg.sender) return smsStatus('کلید، شماره‌ی موبایل و شماره‌ی خط ارسال‌کننده رو وارد کن.', true);
     smsStatus('در حال ارسال...');
     try {
-      await smsCall('send/simple', { from: smsCfg.sender, to: smsCfg.receptor, text: 'تست Smart-Planner: پیامک هشدار وصل شد.' });
+      await smsCall('POST', 'send/simple', { from: smsCfg.sender, to: smsCfg.receptor, text: 'تست Smart-Planner: پیامک هشدار وصل شد.' });
       smsStatus('✅ یک پیامک تست فرستاده شد (از اعتبارت کم می‌شه). اگه تا چند دقیقه نیومد، شماره‌ی خط ارسال‌کننده رو چک کن.');
       if (smsReady()) scheduleSmsSync(300);
     } catch (e) {
