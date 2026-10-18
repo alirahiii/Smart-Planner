@@ -104,6 +104,30 @@
     .interval-box input { background: var(--card); }
     .interval-preview { font-size: 0.72rem; color: var(--primary); font-weight: 800; text-align: center; line-height: 1.8; margin: 0; }
     .overdue { color: var(--danger); font-weight: 800; }
+    .top-btn { white-space: nowrap; min-height: 42px; }
+    #themeBtn { flex: 0 0 auto; padding: 8px 14px; }
+    input, select { min-height: 44px; }
+    input[type="checkbox"] { min-height: 0; width: 20px !important; height: 20px; accent-color: var(--primary); flex: none; }
+    .act-icon { padding: 8px; font-size: 1.1rem; }
+
+    .alerts-card { padding: 0; overflow: hidden; }
+    .alerts-card > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 18px; font-weight: 800; color: var(--primary); font-size: 0.95rem; flex-wrap: wrap; }
+    .alerts-card > summary::-webkit-details-marker { display: none; }
+    .alerts-card > summary::after { content: '▾'; color: var(--gray); transition: transform .2s; margin-right: auto; }
+    .alerts-card[open] > summary::after { transform: rotate(180deg); }
+    .alerts-body { padding: 0 18px 16px; }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip { font-size: 0.68rem; font-weight: 700; padding: 3px 9px; border-radius: 20px; background: var(--border); color: var(--gray); white-space: nowrap; }
+    .chip.ok { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .chip.warn { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
+    .sub-card { border: 1px solid var(--border); border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; background: var(--bg); }
+    .sub-card > summary { cursor: pointer; font-weight: 800; color: var(--primary); font-size: 0.85rem; }
+
+    .rem-box { background: var(--bg); border: 1px solid var(--border); border-radius: 18px; padding: 12px; margin-bottom: 12px; }
+    .rem-box select, .rem-box input { background: var(--card); }
+    .rem-title { font-size: 0.8rem; font-weight: 800; color: var(--primary); margin: 0 2px 10px; }
+    .switch-row { display: flex; gap: 10px; align-items: center; margin: 4px 0 2px; font-weight: 700; font-size: 0.82rem; cursor: pointer; padding: 6px 2px; }
+    .switch-row small { font-weight: 500; color: var(--gray); }
     .notif-note { font-size: 0.68rem; color: var(--gray); text-align: center; margin: 0 0 14px; line-height: 1.7; }
   </style>
 </head>
@@ -116,9 +140,12 @@
     <button class="top-btn" onclick="document.getElementById('importInput').click()">📤 بارگذاری بک‌آپ</button>
     <input type="file" id="importInput" style="display:none" onchange="importBackup(this)">
   </div>
-  <div style="margin-bottom: 6px;"><button class="top-btn" id="notifBtn" onclick="onNotifBtn()" style="width: 100%;">🔔 فعال‌سازی هشدار</button></div>
+  <details id="alertsBox" class="card alerts-card">
+    <summary><span>🔔 هشدارها</span><span id="alertChips" class="chips"></span></summary>
+    <div class="alerts-body">
+  <button class="top-btn" id="notifBtn" onclick="onNotifBtn()" style="width: 100%; margin-bottom: 8px;">🔔 فعال‌سازی هشدار</button>
   <p class="notif-note">نوتیف Chrome فقط وقتی میاد که Chrome زنده باشه. اگه گوشی قفل بشه یا Chrome بسته بشه، دیر یا هیچ‌وقت نمیاد. برای اطمینان بیشتر ntfy رو هم فعال کن.</p>
-  <details id="ntfyBox" class="card" style="padding: 12px 18px;">
+  <details id="ntfyBox" class="sub-card">
     <summary style="cursor: pointer; font-weight: 800; color: var(--primary); font-size: 0.9rem;">📱 نوتیف مطمئن‌تر روی اندروید (ntfy)</summary>
     <div style="margin-top: 12px; font-size: 0.75rem; line-height: 1.9;">
       <ol style="padding-right: 18px; margin: 0 0 12px;">
@@ -136,23 +163,26 @@
       <p id="ntfyStatus" class="notif-note" style="margin: 10px 0 0;"></p>
     </div>
   </details>
-  <details id="smsBox" class="card" style="padding: 12px 18px;">
-    <summary style="cursor: pointer; font-weight: 800; color: var(--primary); font-size: 0.9rem;">📩 پیامک هشدار (کاوه‌نگار)، بدون نیاز به VPN</summary>
+  <details id="smsBox" class="sub-card">
+    <summary style="cursor: pointer; font-weight: 800; color: var(--primary); font-size: 0.9rem;">📩 پیامک هشدار (ملی‌پیامک)، بدون نیاز به VPN</summary>
     <div style="margin-top: 12px; font-size: 0.75rem; line-height: 1.9;">
       <ol style="padding-right: 18px; margin: 0 0 12px;">
-        <li>تو kavenegar.com ثبت‌نام کن و از پنل، «کلید API» رو بردار.</li>
-        <li>کلید و شماره‌ی موبایلت رو این‌جا وارد کن و «فعال» رو بزن.</li>
+        <li>تو melipayamak.com ثبت‌نام کن (پنل باید «API» داشته باشه) و از کنسولش (console.melipayamak.com) «کلید API» رو بردار.</li>
+        <li>کلید، شماره‌ی موبایل خودت و <b>شماره‌ی خط ارسال‌کننده‌ات</b> رو این‌جا وارد کن و «فعال» رو بزن.</li>
         <li>موقع ساخت هر تسک، فقط اگه تیک «پیامک هم بفرست» رو بزنی براش پیامک میره.</li>
       </ol>
       <label class="mini-label" for="smsKey">کلید API (فقط توی همین مرورگر ذخیره می‌شه؛ جای دیگه‌ای، مخصوصاً GitHub، نذارش)</label>
       <input type="password" id="smsKey" dir="ltr" autocomplete="off" style="text-align: left;" onchange="saveSmsCfg()">
       <label class="mini-label" for="smsPhone">شماره‌ی موبایل خودت</label>
       <input type="tel" id="smsPhone" dir="ltr" placeholder="09123456789" style="text-align: left;" onchange="saveSmsCfg()">
-      <label class="mini-label" for="smsSender">شماره‌ی خط ارسال‌کننده (اختیاری؛ خالی بذار تا خط پیش‌فرض)</label>
-      <input type="text" id="smsSender" dir="ltr" style="text-align: left;" onchange="saveSmsCfg()">
+      <label class="mini-label" for="smsSender">شماره‌ی خط ارسال‌کننده (از پنل ملی‌پیامک؛ با خط عمومی از API نمی‌شه ارسال کرد)</label>
+      <input type="text" id="smsSender" dir="ltr" inputmode="numeric" style="text-align: left;" onchange="saveSmsCfg()">
       <label style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; font-weight: 700;"><input type="checkbox" id="smsEnabled" style="width: auto; margin: 0;" onchange="saveSmsCfg()"> ارسال پیامک برای تسک‌های تیک‌دار فعال باشه</label>
       <button class="btn" style="height: 38px; font-size: 0.85rem;" onclick="smsTest()">ارسال پیامک تست</button>
       <p id="smsStatus" class="notif-note" style="margin: 10px 0 0;"></p>
+      <p class="notif-note" style="margin: 6px 0 0; text-align: right;">⚠️ لغو پیامکِ زمان‌بندی‌شده از مرورگر ممکن نیست: اگه تسک رو ویرایش یا حذف کنی، پیامک قبلی هنوز می‌ره. پیامک زمان‌بندی‌شده شاید فقط بین ۷ صبح تا ۱۰ شب مجاز باشه؛ اگه رد شد، اپ دلیلش رو همین‌جا می‌نویسه.</p>
+    </div>
+  </details>
     </div>
   </details>
   
@@ -195,6 +225,8 @@
     </div>
     <p id="startDateLabel" style="text-align:center; font-size:0.7rem; color:var(--gray); margin-top:-5px; margin-bottom:10px; font-weight:900;"></p>
 
+    <div class="rem-box">
+      <div class="rem-title">⏰ زمان و یادآوری</div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
       <div>
         <label class="mini-label" for="taskTime">⏰ ساعت (اختیاری)</label>
@@ -227,8 +259,9 @@
           <option value="1440">۱ روز قبل</option>
           <option value="eve">شب قبل (ساعت ۲۰:۰۰)</option>
     </select>
-    <label style="display: flex; gap: 8px; align-items: center; margin: 6px 0 4px; font-weight: 700; font-size: 0.8rem;"><input type="checkbox" id="taskSms" style="width: auto; margin: 0;" onchange="updateSmsHint()"> 📩 پیامک هم بفرست (زودترین یادآوری)</label>
-    <p id="smsHint" class="notif-note" style="text-align: right; margin: 0 0 8px;"></p>
+    <label class="switch-row"><input type="checkbox" id="taskSms" style="margin: 0;" onchange="updateSmsHint()"><span>📩 پیامک هم بفرست <small>(برای زودترین یادآوری)</small></span></label>
+    <p id="smsHint" class="notif-note" style="text-align: right; margin: 0;"></p>
+    </div>
 
     <div id="intervalBox" class="interval-box">
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -579,6 +612,7 @@
       Promise.resolve(Notification.requestPermission()).then(updateNotifBtn);
     }
     resetForm(); renderTasks(); checkReminders();
+    toastSaved(time, remind, remind2, common.sms);
   }
 
   function editTask(id) {
@@ -667,6 +701,8 @@
       s += ` | ⏰ <span class="${late ? 'overdue' : ''}">${toFa(t.time)}</span>`;
     }
     if (t.courseId) s += ` | 💊 دُز ${toFa(t.dose)} از ${toFa(t.doseTotal)}`;
+    if (t.time && ((t.remind && t.remind !== 'off') || (t.remind2 && t.remind2 !== 'off'))) s += ' | 🔔';
+    if (t.time && t.sms) s += ' | 📩';
     return s;
   }
 
@@ -799,6 +835,7 @@
     const b = $('#notifBtn');
     if (!('Notification' in window)) { b.text('🔕 این مرورگر نوتیف پشتیبانی نمی‌کنه'); return; }
     const p = Notification.permission;
+    updateAlertChips();
     b.text(p === 'granted' ? '🔔 هشدار فعاله (برای تست بزن)' : p === 'denied' ? '🔕 هشدار بلاک شده (برای راهنما بزن)' : '🔔 فعال‌سازی هشدار');
   }
 
@@ -826,6 +863,7 @@
     scheduleNtfySync(2500);
     setInterval(() => scheduleNtfySync(100), 10 * 60 * 1000);
     initSmsUI();
+    updateAlertChips();
     scheduleSmsSync(3500);
     setInterval(() => scheduleSmsSync(100), 10 * 60 * 1000);
   }
@@ -963,6 +1001,27 @@
     }
   }
 
+
+  function toastSaved(time, remind, remind2, sms) {
+    const label = v => v === 'eve' ? 'شب قبل ۲۰:۰۰' : v === '0' ? 'سر وقت' : (parseInt(v, 10) >= 1440 ? '۱ روز قبل' : fmtRemaining(parseInt(v, 10)) + ' قبل');
+    let msg = '✅ ذخیره شد';
+    if (time) {
+      const r = [remind, remind2].filter(x => x && x !== 'off').map(label);
+      if (r.length) msg += ' · 🔔 ' + r.join(' و ') + (sms ? ' · 📩' : '');
+    }
+    try { Swal.fire({ toast: true, position: 'top', showConfirmButton: false, timer: 2600, title: msg }); } catch (e) {}
+  }
+
+  function updateAlertChips() {
+    const perm = ('Notification' in window) ? Notification.permission : 'denied';
+    const chip = (ok, label) => `<span class="chip ${ok ? 'ok' : ''}">${ok ? '✓' : '○'} ${label}</span>`;
+    const html = `<span class="chip ${perm === 'granted' ? 'ok' : 'warn'}">${perm === 'granted' ? '✓' : '✕'} Chrome</span>`
+      + chip(!!(typeof ntfyCfg !== 'undefined' && ntfyCfg.enabled), 'ntfy')
+      + chip(!!(typeof smsReady === 'function' && smsReady()), 'پیامک');
+    $('#alertChips').html(html);
+  }
+  $(document).on('change input', '#alertsBox', () => setTimeout(updateAlertChips, 60));
+
   async function ntfyTest() {
     saveNtfyCfg();
     if (!ntfyCfg.topic) return ntfyStatus('اسم کانال خالیه.', true);
@@ -979,22 +1038,29 @@
   }
 
   /* =====================================================================
-     پیامک (کاوه‌نگار): فقط برای تسک‌هایی که تیک «پیامک هم بفرست» دارن.
-     پیامک سمت سرور کاوه‌نگار با پارامتر date زمان‌بندی می‌شه؛ پس Chrome بسته هم باشه می‌رسه.
-     برای هر تسک فقط یک پیامک (زودترین یادآوری) فرستاده می‌شه تا هزینه کم بمونه.
+     پیامک (کنسول ملی‌پیامک): فقط برای تسک‌هایی که تیک «پیامک هم بفرست» دارن.
+     پیامک سمت سرور ملی‌پیامک زمان‌بندی می‌شه؛ پس Chrome بسته هم باشه می‌رسه.
+     برای هر تسک فقط یک پیامک (زودترین یادآوری). لغو از مرورگر ممکن نیست؛
+     پس ویرایش/حذف تسک، پیامکِ قبلاً زمان‌بندی‌شده رو لغو نمی‌کنه.
      ===================================================================== */
-  const SMS_HORIZON_MS = 71 * 3600 * 1000;
+  let SMS_HORIZON_MS = 30 * 3600 * 1000;
   let smsCfg = Object.assign({ enabled: false, key: '', receptor: '', sender: '' }, readJSON('sms_cfg_v1', {}));
-  let smsSched = readJSON('sms_sched_v1', {});   // شناسه → { sig, due, mid }
+  let smsSched = readJSON('sms_sched_v1', {});   // شناسه → { sig, due }
+  let smsFailed = {};                            // شناسه → sig (فقط تا بستن صفحه، برای اینکه هر ۱۰ دقیقه دوباره نکوبه)
   let smsBusy = false, smsAgain = false, smsTimer = null;
   const saveSmsState = () => { try { localStorage.setItem('sms_cfg_v1', JSON.stringify(smsCfg)); localStorage.setItem('sms_sched_v1', JSON.stringify(smsSched)); } catch (e) {} };
   const smsKey = (dateStr, id) => `sp-${dateStr.replace(/\//g, '')}-${id}`;
   function smsStatus(msg, bad) { $('#smsStatus').text(msg).css('color', bad ? 'var(--danger)' : 'var(--gray)'); }
+  const smsReady = () => !!(smsCfg.enabled && smsCfg.key && smsCfg.receptor && smsCfg.sender);
 
   function normPhone(s) {
     const d = toEn(String(s || '')).replace(/[\s\-()]/g, '');
     const m = d.match(/^(?:\+98|0098|98|0)?(9\d{9})$/);
     return m ? '0' + m[1] : '';
+  }
+  function localIso(ms) {
+    const d = new Date(ms);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:00`;
   }
 
   function initSmsUI() {
@@ -1003,72 +1069,55 @@
     updateSmsHint();
   }
   function updateSmsHint() {
-    const ok = smsCfg.enabled && smsCfg.key && smsCfg.receptor;
-    $('#smsHint').text(ok ? '' : 'پیامک هنوز در تنظیمات (بالای صفحه) فعال نشده؛ تیک بخوره هم تا اون موقع پیامکی نمی‌ره.');
+    $('#smsHint').text(smsReady() ? '' : 'پیامک هنوز در تنظیمات هشدارها فعال نشده؛ تیک بخوره هم تا اون موقع پیامکی نمی‌ره.');
+    if (typeof updateAlertChips === 'function') updateAlertChips();
   }
 
   function saveSmsCfg() {
-    const was = { enabled: smsCfg.enabled, key: smsCfg.key };
     smsCfg.key = ($('#smsKey').val() || '').trim();
-    const ph = normPhone($('#smsPhone').val());
-    if ($('#smsPhone').val().trim() && !ph) smsStatus('شماره‌ی موبایل درست نیست (مثل 09123456789).', true);
-    smsCfg.receptor = ph || ($('#smsPhone').val().trim() ? '' : '');
+    const rawPhone = ($('#smsPhone').val() || '').trim();
+    const ph = normPhone(rawPhone);
+    if (rawPhone && !ph) smsStatus('شماره‌ی موبایل درست نیست (مثل 09123456789).', true);
+    smsCfg.receptor = ph;
     if (ph) $('#smsPhone').val(ph);
-    smsCfg.sender = ($('#smsSender').val() || '').trim();
-    smsCfg.enabled = $('#smsEnabled').prop('checked') && !!smsCfg.key && !!smsCfg.receptor;
-    if ($('#smsEnabled').prop('checked') && !smsCfg.enabled) smsStatus('برای فعال شدن، کلید API و شماره‌ی درست لازمه.', true);
-    if (was.enabled && (!smsCfg.enabled || was.key !== smsCfg.key)) smsCancelAll(was.key);
+    smsCfg.sender = toEn(($('#smsSender').val() || '').trim());
+    smsCfg.enabled = $('#smsEnabled').prop('checked') && !!smsCfg.key && !!smsCfg.receptor && !!smsCfg.sender;
+    if ($('#smsEnabled').prop('checked') && !smsCfg.enabled) smsStatus('برای فعال شدن، کلید و شماره‌ی موبایل و شماره‌ی خط ارسال‌کننده لازمه.', true);
     saveSmsState(); updateSmsHint();
-    if (smsCfg.enabled) scheduleSmsSync(300); else if (was.enabled) smsStatus('ارسال پیامک خاموش شد و پیامک‌های زمان‌بندی‌شده لغو شدن.');
+    if (smsCfg.enabled) scheduleSmsSync(300);
   }
 
-  const SMS_ERR = { 417: 'تاریخ ارسال نامعتبره', 418: 'اعتبار کاوه‌نگار کافی نیست', 411: 'شماره‌ی گیرنده نامعتبره', 412: 'خط ارسال‌کننده نامعتبره (فیلد خط رو خالی بذار)', 413: 'طول پیامک نامعتبره' };
-
-  async function smsCall(key, method, params) {
-    const body = new URLSearchParams();
-    Object.keys(params).forEach(k => { if (params[k] !== undefined && params[k] !== '') body.append(k, params[k]); });
-    const res = await fetch(`https://api.kavenegar.com/v1/${encodeURIComponent(key)}/sms/${method}.json`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
-    let j = null;
-    try { j = await res.json(); } catch (e) {}
-    const st = j && j.return ? j.return.status : res.status;
-    if (st !== 200) {
-      const e = new Error(SMS_ERR[st] || (j && j.return && j.return.message) || ('HTTP ' + res.status));
-      e.status = st; throw e;
+  async function smsCall(path, payload) {
+    const res = await fetch(`https://console.melipayamak.com/api/${path}/${encodeURIComponent(smsCfg.key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    let txt = ''; try { txt = await res.text(); } catch (e) {}
+    let j = null; try { j = JSON.parse(txt); } catch (e) {}
+    if (!res.ok) {
+      const m = (j && (typeof j.status === 'string' ? j.status : j.message || j.title)) || ('HTTP ' + res.status);
+      const e = new Error(String(m)); e.status = res.status; throw e;
     }
-    return Array.isArray(j.entries) ? j.entries : (j.entries ? [j.entries] : []);
-  }
-
-  async function smsCancelIds(key, mids) {
-    if (!mids.length) return;
-    try { await smsCall(key, 'cancel', { messageid: mids.join(',') }); } catch (e) {}
-  }
-  async function smsCancelAll(key) {
-    const now = Date.now();
-    const mids = Object.keys(smsSched).filter(k => smsSched[k].due > now && smsSched[k].mid).map(k => smsSched[k].mid);
-    smsSched = {}; saveSmsState();
-    await smsCancelIds(key || smsCfg.key, mids);
+    return j;
   }
 
   function scheduleSmsSync(delay) {
-    if (!smsCfg.enabled) return;
+    if (!smsReady()) return;
     clearTimeout(smsTimer);
     smsTimer = setTimeout(() => syncSms(), delay || 800);
   }
 
   function smsText(t, dateStr, leadMin, nextDay) {
     const x = reminderText(t, dateStr, leadMin, nextDay);
-    const s = x.title + '\n' + x.body;
+    const s = x.title.replace(/^⏰\s*/, '') + '\n' + x.body;
     return s.length > 70 ? s.slice(0, 69) + '…' : s;
   }
 
   async function syncSms() {
-    if (!smsCfg.enabled || !smsCfg.key || !smsCfg.receptor) return;
+    if (!smsReady()) return;
     if (smsBusy) { smsAgain = true; return; }
     smsBusy = true;
     try {
       const now = new Date(), nowMs = now.getTime();
       const wanted = {};
-      for (let off = 0; off <= 4; off++) {
+      for (let off = 0; off <= 2; off++) {
         const dateStr = toEn(new persianDate(now).add('days', off).format('YYYY/MM/DD'));
         const dayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate() + off).getTime();
         occurrencesFor(dateStr).forEach(item => {
@@ -1086,34 +1135,33 @@
           if (!best) return;
           const eventMs = dayMs + timeMin * 60000;
           const nextDay = new Date(eventMs).toDateString() !== new Date(best.dueMs).toDateString();
-          const text = smsText(t, dateStr, Math.round((eventMs - best.dueMs) / 60000), nextDay);
-          wanted[smsKey(dateStr, t.id)] = { sig: [t.time, best.rem, t.title, best.dueMs, smsCfg.receptor].join('|'), dueMs: best.dueMs, text };
+          wanted[smsKey(dateStr, t.id)] = { sig: [t.time, best.rem, t.title, best.dueMs, smsCfg.receptor].join('|'), dueMs: best.dueMs, text: smsText(t, dateStr, Math.round((eventMs - best.dueMs) / 60000), nextDay) };
         });
       }
-      // اول لغوهای لازم (ویرایش‌شده/تیک‌خورده/حذف‌شده)، بعد ارسال‌های جدید
-      const toCancel = [];
-      Object.keys(smsSched).forEach(k => {
-        const s = smsSched[k];
-        const w = wanted[k];
-        if (w && w.sig === s.sig) return;
-        if (s.due > nowMs && s.mid) toCancel.push(s.mid);
-        if (s.due > nowMs || s.due < nowMs - 6 * 3600 * 1000 || w) delete smsSched[k];
-      });
-      saveSmsState();
-      await smsCancelIds(smsCfg.key, toCancel);
+      Object.keys(smsSched).forEach(k => { if (smsSched[k].due < nowMs - 6 * 3600 * 1000) delete smsSched[k]; });
+      let failed = 0, firstErr = '';
       for (const k of Object.keys(wanted)) {
-        if (smsSched[k]) continue;
         const w = wanted[k];
-        const ent = await smsCall(smsCfg.key, 'send', { receptor: smsCfg.receptor, message: w.text, sender: smsCfg.sender, date: Math.round(w.dueMs / 1000) });
-        smsSched[k] = { sig: w.sig, due: w.dueMs, mid: ent[0] && ent[0].messageid ? String(ent[0].messageid) : '' };
-        saveSmsState();
+        if (smsSched[k] && smsSched[k].sig === w.sig) continue;
+        if (smsFailed[k] === w.sig) { failed++; continue; }
+        try {
+          await smsCall('send/schedule', { from: smsCfg.sender, to: smsCfg.receptor, message: w.text, date: localIso(w.dueMs) });
+          smsSched[k] = { sig: w.sig, due: w.dueMs };
+          saveSmsState();
+        } catch (e) {
+          if (/fetch|network|load failed/i.test(String(e.message))) throw e;
+          smsFailed[k] = w.sig; failed++; firstErr = firstErr || e.message;
+        }
       }
+      saveSmsState();
       const pend = Object.keys(smsSched).filter(k => smsSched[k].due > nowMs).length;
-      smsStatus(`✅ ساعت ${toFa(pad2(now.getHours()) + ':' + pad2(now.getMinutes()))} همگام شد · ${toFa(pend)} پیامک برای ۳ روز آینده زمان‌بندی شده`);
+      const base = `ساعت ${toFa(pad2(now.getHours()) + ':' + pad2(now.getMinutes()))} · ${toFa(pend)} پیامک برای ۳۰ ساعت آینده زمان‌بندی شده`;
+      if (failed) smsStatus(`⚠️ ${base} · ${toFa(failed)} مورد رد شد: ${firstErr || 'قبلاً رد شده'}`, true);
+      else smsStatus('✅ ' + base);
     } catch (e) {
       saveSmsState();
       const net = /fetch|network|load failed/i.test(String(e.message));
-      smsStatus('⚠️ پیامک زمان‌بندی نشد: ' + (net ? 'اتصال به api.kavenegar.com برقرار نشد' : e.message) + '. بعداً خودکار دوباره تلاش می‌کنم.', true);
+      smsStatus('⚠️ پیامک زمان‌بندی نشد: ' + (net ? 'اتصال به console.melipayamak.com برقرار نشد' : e.message) + '. بعداً خودکار دوباره تلاش می‌کنم.', true);
     } finally {
       smsBusy = false;
       if (smsAgain) { smsAgain = false; scheduleSmsSync(500); }
@@ -1121,17 +1169,16 @@
   }
 
   async function smsTest() {
-    $('#smsEnabled').prop('checked', $('#smsEnabled').prop('checked'));
     saveSmsCfg();
-    if (!smsCfg.key || !smsCfg.receptor) return smsStatus('کلید API و شماره‌ی موبایل رو وارد کن.', true);
+    if (!smsCfg.key || !smsCfg.receptor || !smsCfg.sender) return smsStatus('کلید، شماره‌ی موبایل و شماره‌ی خط ارسال‌کننده رو وارد کن.', true);
     smsStatus('در حال ارسال...');
     try {
-      await smsCall(smsCfg.key, 'send', { receptor: smsCfg.receptor, message: 'تست Smart-Planner: پیامک هشدار وصل شد.', sender: smsCfg.sender });
-      smsStatus('✅ یک پیامک تست فرستاده شد (یک پیامک از اعتبارت کم می‌شه). اگه تا چند دقیقه نیومد، خط ارسال‌کننده رو چک کن.');
-      if (smsCfg.enabled) scheduleSmsSync(300);
+      await smsCall('send/simple', { from: smsCfg.sender, to: smsCfg.receptor, text: 'تست Smart-Planner: پیامک هشدار وصل شد.' });
+      smsStatus('✅ یک پیامک تست فرستاده شد (از اعتبارت کم می‌شه). اگه تا چند دقیقه نیومد، شماره‌ی خط ارسال‌کننده رو چک کن.');
+      if (smsReady()) scheduleSmsSync(300);
     } catch (e) {
       const net = /fetch|network|load failed/i.test(String(e.message));
-      smsStatus('⚠️ ' + (net ? 'اتصال به api.kavenegar.com برقرار نشد' : e.message), true);
+      smsStatus('⚠️ ' + (net ? 'اتصال به console.melipayamak.com برقرار نشد' : e.message), true);
     }
   }
 
