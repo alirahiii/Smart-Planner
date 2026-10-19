@@ -127,6 +127,33 @@
     .pp-prev { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--primary-light); color: var(--primary); font-size: 0.8rem; font-weight: 800; line-height: 1.8; }
     .pp-prev small { display: block; font-weight: 500; color: var(--gray); font-size: 0.7rem; }
 
+    /* ---------- صفحه‌ی یادداشت‌ها ---------- */
+    body.np-open { overflow: hidden; }
+    .notes-page { position: fixed; inset: 0; z-index: 60; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch; display: none; padding: 15px; box-sizing: border-box; }
+    .notes-page.show { display: block; }
+    .np-inner { max-width: 500px; margin: 0 auto; padding-bottom: 40px; }
+    .np-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .np-head h2 { flex: 1; font-size: 1.1rem; }
+    .np-back { font-family: 'Vazirmatn'; font-size: 0.82rem; font-weight: 800; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 12px; padding: 9px 14px; cursor: pointer; }
+    .np-datebar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .np-datebar .lbl { flex: 1; text-align: center; font-weight: 800; font-size: 0.92rem; line-height: 1.5; }
+    .np-datebar .lbl small { display: block; font-weight: 600; font-size: 0.7rem; color: var(--gray); }
+    .np-nav { font-family: 'Vazirmatn'; font-size: 0.75rem; font-weight: 800; border: 1px solid var(--border); background: var(--bg); color: var(--primary); border-radius: 12px; padding: 9px 12px; cursor: pointer; white-space: nowrap; }
+    .np-mood { display: flex; justify-content: space-around; margin: 4px 0 12px; }
+    .np-mood span { font-size: 1.6rem; cursor: pointer; filter: grayscale(1); opacity: .4; transition: .2s; padding: 4px 8px; }
+    .np-mood span.active { filter: none; opacity: 1; transform: scale(1.2); }
+    #npText { width: 100%; min-height: 200px; height: 200px; font-size: 0.95rem; line-height: 2; resize: none; margin-bottom: 6px; overflow: hidden; }
+    .np-foot { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--gray); font-weight: 700; }
+    .np-search input { margin-bottom: 8px; }
+    .np-stats { font-size: 0.72rem; color: var(--gray); font-weight: 700; margin: 0 4px 6px; }
+    .np-month { font-size: 0.78rem; font-weight: 800; color: var(--primary); margin: 16px 4px 6px; display: flex; gap: 6px; align-items: center; }
+    .np-month::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .np-item { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 11px 13px; margin-bottom: 8px; cursor: pointer; }
+    .np-item.cur { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+    .np-item .d { font-size: 0.74rem; font-weight: 800; color: var(--gray); display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .np-item .t { font-size: 0.85rem; line-height: 1.9; white-space: pre-wrap; word-break: break-word; }
+    .np-item mark { background: rgba(245,158,11,.35); color: inherit; border-radius: 4px; padding: 0 2px; }
+    .np-empty { text-align: center; color: var(--gray); font-size: 0.8rem; padding: 24px 8px; line-height: 2; }
     .p-bar-bg { background: var(--border); height: 10px; border-radius: 10px; overflow: hidden; }
     .p-bar-fill { background: var(--success); height: 100%; width: 0%; transition: 0.6s ease-out; }
 
@@ -188,6 +215,7 @@
     <button class="top-btn" onclick="document.getElementById('importInput').click()">📤 بارگذاری بک‌آپ</button>
     <input type="file" id="importInput" style="display:none" onchange="importBackup(this)">
   </div>
+  <button class="top-btn" id="notesBtn" onclick="openNotes()" style="width:100%; margin-bottom:10px; font-weight:800;">📝 یادداشت‌ها <span id="notesCount" class="chip" style="margin-right:6px"></span></button>
   <details id="alertsBox" class="card alerts-card">
     <summary><span>🔔 هشدارها</span><span id="alertChips" class="chips"></span></summary>
     <div class="alerts-body">
@@ -390,6 +418,7 @@
     </div>
     <textarea id="dailyNote" placeholder="دلیل عدم انجام برنامه‌ها یا اتفاقات خوب امروز..."></textarea>
     <button class="btn" style="height: 38px; font-size: 0.85rem; background: var(--gray);" onclick="saveDailyNote()">ذخیره یادداشت و مود</button>
+    <button class="btn" style="height: 38px; font-size: 0.85rem; background: var(--primary-light); color: var(--primary); margin-top: 8px;" onclick="openNotes(normalizeDateStr($('#viewDatePicker').val()))">📖 همه‌ی یادداشت‌ها و جستجو</button>
   </div>
 
   <div class="card">
@@ -403,6 +432,30 @@
 
 </div>
 
+<div id="notesPage" class="notes-page" aria-hidden="true">
+  <div class="np-inner">
+    <div class="np-head"><button class="np-back" onclick="closeNotes()">→ برگشت</button><h2>📝 یادداشت‌ها</h2></div>
+    <div class="card" style="padding:14px">
+      <div class="np-datebar">
+        <button class="np-nav" onclick="npShift(-1)">روز قبل</button>
+        <div class="lbl" id="npDateLabel"></div>
+        <button class="np-nav" onclick="npShift(1)">روز بعد</button>
+      </div>
+      <div style="text-align:center;margin:-2px 0 8px"><button class="np-nav" onclick="npLoad(todayEn())">امروز</button></div>
+      <div class="np-mood" id="npMood">
+        <span data-mood="happy" onclick="npSetMood('happy')">🤩</span><span data-mood="good" onclick="npSetMood('good')">😊</span><span data-mood="neutral" onclick="npSetMood('neutral')">😐</span><span data-mood="sad" onclick="npSetMood('sad')">😔</span><span data-mood="tired" onclick="npSetMood('tired')">😴</span>
+      </div>
+      <textarea id="npText" placeholder="امروز چطور گذشت؟ هرچی تو ذهنته بنویس..." oninput="npInput()"></textarea>
+      <div class="np-foot"><span id="npStatus"></span><span id="npWords"></span></div>
+    </div>
+    <div class="np-search">
+      <input id="npSearch" type="search" placeholder="🔍 جستجو توی همه‌ی یادداشت‌ها" oninput="renderNotesList()">
+      <div class="np-stats" id="npStats"></div>
+    </div>
+    <div id="npList"></div>
+    <button class="np-nav" style="width:100%;margin-top:14px;padding:12px" onclick="exportNotes()">⬇️ دانلود همه‌ی یادداشت‌ها (متنی)</button>
+  </div>
+</div>
 <script>
   let tasks = JSON.parse(localStorage.getItem('tasks_v24')) || [];
   let completedState = JSON.parse(localStorage.getItem('tasks_done_v24')) || {};
@@ -513,7 +566,8 @@
 
   function saveDailyNote() {
     const date = normalizeDateStr($("#viewDatePicker").val());
-    dailyData[date] = { note: $('#dailyNote').val(), mood: $('.mood-btn.active').data('mood') };
+    dailyData[date] = Object.assign({}, dailyData[date] || {}, { note: $('#dailyNote').val(), mood: $('.mood-btn.active').data('mood'), at: Date.now() });
+    updateNotesCount();
     localStorage.setItem('daily_data_v24', JSON.stringify(dailyData));
     alert('یادداشت و مود با موفقیت ثبت شد ✅');
   }
@@ -863,6 +917,110 @@
     Swal.fire({ title: 'مانده از قبل', html: `<div style="max-height:40vh;overflow:auto">${rows}</div>`, showCancelButton: true, confirmButtonText: 'همه رو بیار امروز', cancelButtonText: 'بعدا' })
       .then(r => { if (r.isConfirmed) { const today = todayEn(); list.forEach(it => { postponedState[it.key] = today; postponedMeta[it.key] = { time: null, at: Date.now() }; }); saveMoves(); renderTasks(); } });
   }
+
+
+  /* =====================================================================
+     صفحه‌ی یادداشت‌ها: همون dailyData قبلی (یادداشت هر روز + حال‌وهوا)، ذخیره‌ی خودکار
+     ===================================================================== */
+  const MOOD_EMO = { happy: '🤩', good: '😊', neutral: '😐', sad: '😔', tired: '😴' };
+  let npDate = null, npTimer = null, npMoodSel = '';
+  const normFa = s => toEn(s || '').replace(/ي/g, 'ی').replace(/ك/g, 'ک').toLowerCase();
+  const faLong = d => fmtDayLong(d) + ' ' + toFa(d.split('/')[0]);
+  const noteDates = () => Object.keys(dailyData).filter(d => dailyData[d] && ((dailyData[d].note || '').trim() || dailyData[d].mood)).sort().reverse();
+  const wordCount = s => (s || '').trim() ? (s.trim().split(/\s+/).length) : 0;
+
+  function updateNotesCount() { const n = noteDates().length; $('#notesCount').text(n ? toFa(n) : ''); }
+
+  function openNotes(date) {
+    $('#notesPage').addClass('show').attr('aria-hidden', 'false'); $('body').addClass('np-open');
+    if (!(history.state && history.state.notes)) { try { history.pushState({ notes: 1 }, '', '#notes'); } catch (e) {} }
+    $('#npSearch').val('');
+    npLoad(date || todayEn());
+    $('#notesPage').scrollTop(0);
+  }
+  function hideNotes() {
+    npSaveNow(); npDate = null;
+    $('#notesPage').removeClass('show').attr('aria-hidden', 'true'); $('body').removeClass('np-open');
+    loadDailyNote(); updateNotesCount();
+  }
+  function closeNotes() { if (history.state && history.state.notes) history.back(); else hideNotes(); }
+  window.addEventListener('popstate', () => { if ($('#notesPage').hasClass('show')) hideNotes(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) npSaveNow(); });
+
+  function npAutosize() { const el = document.getElementById('npText'); el.style.height = '200px'; el.style.height = Math.max(200, el.scrollHeight + 4) + 'px'; }
+  function npLoad(date) {
+    if (npDate) npSaveNow();
+    npDate = date;
+    const d = dailyData[date] || {};
+    $('#npText').val(d.note || ''); npMoodSel = d.mood || '';
+    $('#npDateLabel').html(`${esc(faLong(date))}<small>${date === todayEn() ? 'امروز' : toFa(date)}</small>`);
+    $('#npMood span').each((i, e) => $(e).toggleClass('active', $(e).data('mood') === npMoodSel));
+    $('#npStatus').text(''); $('#npWords').text(wordCount(d.note) ? toFa(wordCount(d.note)) + ' کلمه' : '');
+    npAutosize(); renderNotesList();
+  }
+  function npShift(n) { npLoad(addDaysEn(npDate, n)); }
+  function npSetMood(m) { npMoodSel = npMoodSel === m ? '' : m; $('#npMood span').each((i, e) => $(e).toggleClass('active', $(e).data('mood') === npMoodSel)); npInput(); }
+  function npInput() {
+    $('#npStatus').text('در حال نوشتن…'); npAutosize();
+    $('#npWords').text(wordCount($('#npText').val()) ? toFa(wordCount($('#npText').val())) + ' کلمه' : '');
+    clearTimeout(npTimer); npTimer = setTimeout(npSaveNow, 700);
+  }
+  function npSaveNow() {
+    clearTimeout(npTimer);
+    if (!npDate) return;
+    const note = $('#npText').val();
+    const cur = dailyData[npDate] || {};
+    if (!note.trim() && !npMoodSel) { if (!dailyData[npDate]) return; delete dailyData[npDate]; }
+    else { if ((cur.note || '') === note && (cur.mood || '') === npMoodSel) return; dailyData[npDate] = Object.assign({}, cur, { note, mood: npMoodSel || undefined, at: Date.now() }); }
+    localStorage.setItem('daily_data_v24', JSON.stringify(dailyData));
+    $('#npStatus').text('✓ ذخیره شد'); renderNotesList(); updateNotesCount();
+  }
+
+  function npStreak() {
+    const set = new Set(noteDates().filter(d => (dailyData[d].note || '').trim()));
+    let d = todayEn(), n = 0;
+    if (!set.has(d)) d = addDaysEn(d, -1);
+    while (set.has(d)) { n++; d = addDaysEn(d, -1); }
+    return n;
+  }
+  function hl(text, q) {
+    if (!q) return esc(text);
+    const nt = normFa(text); let out = '', pos = 0, i;
+    while ((i = nt.indexOf(q, pos)) !== -1) { out += esc(text.slice(pos, i)) + '<mark>' + esc(text.slice(i, i + q.length)) + '</mark>'; pos = i + q.length; }
+    return out + esc(text.slice(pos));
+  }
+  function renderNotesList() {
+    const q = normFa(($('#npSearch').val() || '').trim());
+    const all = noteDates();
+    const list = q ? all.filter(d => normFa(dailyData[d].note).includes(q) || normFa(fmtDayLong(d)).includes(q) || d.includes(q)) : all;
+    const box = $('#npList').empty();
+    const totalWords = all.reduce((s, d) => s + wordCount(dailyData[d].note), 0);
+    $('#npStats').text(q ? `${toFa(list.length)} نتیجه از ${toFa(all.length)} یادداشت`
+      : all.length ? `${toFa(all.length)} یادداشت، ${toFa(totalWords)} کلمه` + (npStreak() >= 2 ? `، ${toFa(npStreak())} شبِ پشت‌سرهم 🔥` : '') : '');
+    if (!list.length) { box.append(`<div class="np-empty">${q ? 'چیزی پیدا نشد.' : 'هنوز یادداشتی ننوشتی. بالا بنویس؛ خودکار ذخیره می‌شه ✍️'}</div>`); return; }
+    let lastMonth = '';
+    list.forEach(d => {
+      const [y, m, dd] = d.split('/').map(Number);
+      const month = new persianDate([y, m, dd]).format('MMMM YYYY');
+      if (month !== lastMonth) { lastMonth = month; const c = list.filter(x => x.startsWith(d.slice(0, 8)) ).length; box.append(`<div class="np-month">${esc(toFa(toEn(month)))} <span>(${toFa(c)})</span></div>`); }
+      const note = dailyData[d].note || '';
+      let snip = note.length > 220 && !q ? note.slice(0, 220) + '…' : note;
+      if (q) { const k = normFa(note).indexOf(q); if (k > 80) snip = '…' + note.slice(k - 60, k + 160); else snip = note.slice(0, 220); }
+      box.append(`<div class="np-item${d === npDate ? ' cur' : ''}" onclick="npOpen('${d}')"><div class="d"><span>${esc(fmtDayLong(d))}</span><span>${MOOD_EMO[dailyData[d].mood] || ''}</span></div>${note.trim() ? `<div class="t">${hl(snip, q)}</div>` : ''}</div>`);
+    });
+  }
+  function npOpen(d) { npLoad(d); $('#notesPage').animate({ scrollTop: 0 }, 200); $('#npText').focus(); }
+
+  function notesText() {
+    return noteDates().slice().reverse().map(d => `${faLong(d)}${dailyData[d].mood ? ' ' + MOOD_EMO[dailyData[d].mood] : ''}\n${'-'.repeat(24)}\n${dailyData[d].note || ''}\n`).join('\n');
+  }
+  function exportNotes() {
+    npSaveNow();
+    const blob = new Blob(['﻿' + notesText()], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `smart_planner_notes_${todayEn().replace(/\//g, '-')}.txt`; a.click();
+  }
+  $(document).ready(function () { updateNotesCount(); if (location.hash === '#notes') openNotes(); });
 
   function toggleCard(key) { openCards[key] = !openCards[key]; $(`#card-${key.replace(/\//g, '')}`).toggleClass('open', !!openCards[key]); }
 
